@@ -17,7 +17,7 @@ const catalogue = ref<Fonctionnalite[]>([])
 const erreur = ref('')
 const ouvertes = ref<Set<number>>(new Set())
 const offre = ref<AdminForfaits | null>(null)
-const dureeEssai = computed(() => offre.value?.parametres.dureeEssaiJours || 30)
+const dureeEssai = computed(() => offre.value?.parametres.dureeEssaiJours || 7)
 const nomForfait = (code: string) => offre.value?.forfaits.find((f) => f.code === code)?.nom ?? code
 const estPayant = (code: string) => (offre.value?.forfaits.find((f) => f.code === code)?.prixMensuel ?? 0) > 0
 

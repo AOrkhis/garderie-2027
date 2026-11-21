@@ -93,7 +93,7 @@ export const PARAMETRES_INITIAUX: Partial<ParametresPlateforme> = {
   id: 1,
   forfaitDefaut: 'GRATUIT',
   forfaitEssai: 'PRO',
-  dureeEssaiJours: 30,
+  dureeEssaiJours: 7,
   mentionTaxes: 'Prix en dollars canadiens, avant TPS et TVQ.',
 };
 
