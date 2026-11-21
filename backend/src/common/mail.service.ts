@@ -32,6 +32,11 @@ export class MailService {
           port,
           // SSL direct sur 465, STARTTLS sur 587
           secure: port === 465,
+          // Forcer IPv4 : sur certains hébergeurs l'IPv6 vers Gmail se bloque
+          family: 4,
+          connectionTimeout: 15000,
+          greetingTimeout: 15000,
+          socketTimeout: 30000,
           auth: {
             user: config.get('SMTP_USER'),
             // Les mots de passe d'application Google s'affichent avec des espaces
