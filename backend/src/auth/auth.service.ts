@@ -11,7 +11,7 @@ import { JwtService } from '@nestjs/jwt';
 import { InjectRepository } from '@nestjs/typeorm';
 import * as bcrypt from 'bcryptjs';
 import { randomBytes } from 'crypto';
-import { DataSource, In, MoreThan, Repository } from 'typeorm';
+import { DataSource, In, IsNull, MoreThan, Repository } from 'typeorm';
 import { AuditService } from '../common/audit.service';
 import { UtilisateurConnecte } from '../common/auth.decorators';
 import {
@@ -92,6 +92,11 @@ export class AuthService implements OnModuleInit {
         { courriel: In(courriels) },
         { estSuperAdmin: true },
       );
+    // Comptes existants avant la confirmation de courriel : considérés confirmés.
+    // Les nouvelles inscriptions portent un jeton de confirmation, elles sont exclues.
+    await this.utilisateurs.query(
+      'UPDATE utilisateurs SET courrielConfirmeLe = NOW() WHERE courrielConfirmeLe IS NULL AND jetonConfirmationHash IS NULL',
+    );
   }
 
   async emettreJetons(user: Utilisateur, adhesionId: number | null) {
@@ -142,6 +147,7 @@ export class AuthService implements OnModuleInit {
       reglages?.dureeEssaiJours && forfait(reglages.forfaitEssai)
         ? forfait(reglages.forfaitEssai)!
         : null;
+    const { jeton, hash } = genererJeton();
     const { user, adhesion } = await this.dataSource.transaction(async (m) => {
       const garderie = await m.save(
         m.create(Garderie, {
@@ -161,6 +167,8 @@ export class AuthService implements OnModuleInit {
           prenom: dto.prenom.trim(),
           nom: dto.nom.trim(),
           telephone: dto.telephone ?? null,
+          jetonConfirmationHash: hash,
+          jetonConfirmationExpireLe: new Date(Date.now() + 48 * 60 * 60 * 1000),
         }),
       );
       const adhesion = await m.save(
@@ -177,13 +185,59 @@ export class AuthService implements OnModuleInit {
       { utilisateurId: user.id, garderieId: adhesion.garderieId },
       'garderie.creee',
     );
+    await this.envoyerConfirmation(user, jeton);
+    return { confirmerCourriel: true };
+  }
+
+  /** Courriel de confirmation (inscription ou renvoi). */
+  private async envoyerConfirmation(user: Utilisateur, jeton: string) {
     await this.mail.envoyer(
       user.courriel,
-      'Bienvenue sur Garderie 2027',
-      `Bonjour ${user.prenom},\n\nVotre garderie « ${dto.nomGarderie} » a bien été créée. Vous pouvez maintenant inviter votre personnel et inscrire les enfants.${essai ? `\n\nVotre essai ${essai.nom} de ${reglages!.dureeEssaiJours} jours est activé.` : ''}`,
-      `${this.mail.frontendUrl}/connexion`,
+      'Confirmez votre courriel — Garderie 2027',
+      `Bonjour ${user.prenom},\n\nBienvenue sur Garderie 2027 ! Pour activer votre compte, confirmez votre courriel en cliquant sur le lien ci-dessous (valide 48 heures).`,
+      `${this.mail.frontendUrl}/confirmer-courriel/${jeton}`,
     );
-    return this.emettreJetons(user, adhesion.id);
+  }
+
+  /** Valide le jeton du courriel de confirmation et connecte l'utilisateur. */
+  async confirmerCourriel(jeton: string) {
+    const user = await this.utilisateurs.findOneBy({
+      jetonConfirmationHash: hacherJeton(jeton),
+      jetonConfirmationExpireLe: MoreThan(new Date()),
+    });
+    if (!user)
+      throw new BadRequestException(
+        'Ce lien de confirmation est invalide ou expiré.',
+      );
+    await this.utilisateurs.update(
+      { id: user.id },
+      {
+        courrielConfirmeLe: new Date(),
+        jetonConfirmationHash: null,
+        jetonConfirmationExpireLe: null,
+      },
+    );
+    const adhesion = await this.adhesionParDefaut(user.id);
+    return this.emettreJetons(user, adhesion?.id ?? null);
+  }
+
+  /** Renvoie le courriel de confirmation si le compte n'est pas confirmé. */
+  async renvoyerConfirmation(courriel: string) {
+    const user = await this.utilisateurs.findOneBy({
+      courriel,
+      actif: true,
+      courrielConfirmeLe: IsNull(),
+    });
+    if (!user) return;
+    const { jeton, hash } = genererJeton();
+    await this.utilisateurs.update(
+      { id: user.id },
+      {
+        jetonConfirmationHash: hash,
+        jetonConfirmationExpireLe: new Date(Date.now() + 48 * 60 * 60 * 1000),
+      },
+    );
+    await this.envoyerConfirmation(user, jeton);
   }
 
   async connexion(dto: ConnexionDto) {
@@ -216,6 +270,10 @@ export class AuthService implements OnModuleInit {
       throw new UnauthorizedException('Courriel ou mot de passe incorrect.');
     }
     this.echecs.delete(cle);
+    if (!user.courrielConfirmeLe)
+      throw new ForbiddenException(
+        "Confirmez votre courriel avant de vous connecter. Consultez le courriel reçu à l'inscription (et vos indésirables).",
+      );
 
     const adhesion = await this.adhesionParDefaut(user.id);
     if (!adhesion && !user.estSuperAdmin) {

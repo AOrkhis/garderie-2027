@@ -23,6 +23,7 @@ const router = createRouter({
     { path: '/mot-de-passe-oublie', component: () => import('@/views/public/MotDePasseOublieView.vue'), meta: { public: true, titre: 'Mot de passe oublié' } },
     { path: '/reinitialiser-mot-de-passe', component: () => import('@/views/public/ReinitialiserView.vue'), meta: { public: true, titre: 'Nouveau mot de passe' } },
     { path: '/invitation/:jeton', component: () => import('@/views/public/InvitationView.vue'), meta: { public: true, titre: 'Invitation' } },
+    { path: '/confirmer-courriel/:jeton', component: () => import('@/views/public/ConfirmerCourrielView.vue'), meta: { public: true, titre: 'Confirmation du courriel' } },
 
     { path: '/garderie', redirect: '/garderie/aujourd-hui' },
     { path: '/garderie/aujourd-hui', component: () => import('@/views/garderie/AujourdhuiView.vue'), meta: { roles: PERSONNEL, titre: "Aujourd'hui" } },

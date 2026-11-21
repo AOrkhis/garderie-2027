@@ -16,12 +16,14 @@ import {
   AccepterInvitationDto,
   ChangerAdhesionDto,
   ChangerMotDePasseDto,
+  ConfirmerCourrielDto,
   ConnexionDto,
   InscriptionGarderieDto,
   ModifierProfilDto,
   MotDePasseOublieDto,
   RafraichirDto,
   ReinitialiserDto,
+  RenvoyerConfirmationDto,
 } from './auth.dto';
 import { AuthService } from './auth.service';
 import { InvitationsService } from './invitations.service';
@@ -44,6 +46,24 @@ export class AuthController {
   @Post('auth/connexion')
   connexion(@Body() dto: ConnexionDto) {
     return this.auth.connexion(dto);
+  }
+
+  @Public()
+  @HttpCode(200)
+  @Post('auth/confirmer-courriel')
+  confirmerCourriel(@Body() dto: ConfirmerCourrielDto) {
+    return this.auth.confirmerCourriel(dto.jeton);
+  }
+
+  @Public()
+  @HttpCode(200)
+  @Post('auth/renvoyer-confirmation')
+  async renvoyerConfirmation(@Body() dto: RenvoyerConfirmationDto) {
+    await this.auth.renvoyerConfirmation(dto.courriel);
+    return {
+      message:
+        'Si un compte non confirmé existe avec ce courriel, un nouveau lien a été envoyé.',
+    };
   }
 
   @Public()

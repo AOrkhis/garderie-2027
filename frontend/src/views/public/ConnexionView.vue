@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import { ref } from 'vue'
 import { RouterLink, useRoute, useRouter } from 'vue-router'
+import { api } from '@/api/client'
 import LogoMarque from '@/components/LogoMarque.vue'
 import { useAuthStore } from '@/stores/auth'
 
@@ -11,9 +12,13 @@ const courriel = ref('')
 const motDePasse = ref('')
 const erreur = ref('')
 const envoi = ref(false)
+const confirmationRequise = ref(false)
+const lienRenvoye = ref(false)
 
 async function connecter() {
   erreur.value = ''
+  confirmationRequise.value = false
+  lienRenvoye.value = false
   envoi.value = true
   try {
     await auth.connexion(courriel.value, motDePasse.value)
@@ -21,9 +26,20 @@ async function connecter() {
     router.push(suite)
   } catch (e) {
     erreur.value = (e as Error).message
+    confirmationRequise.value = erreur.value.includes('Confirmez votre courriel')
   } finally {
     envoi.value = false
   }
+}
+
+async function renvoyerLien() {
+  lienRenvoye.value = false
+  await api('/auth/renvoyer-confirmation', {
+    method: 'POST',
+    body: { courriel: courriel.value },
+    auth: false,
+  }).catch(() => undefined)
+  lienRenvoye.value = true
 }
 </script>
 
@@ -41,7 +57,13 @@ async function connecter() {
       <form @submit.prevent="connecter">
         <label class="champ"><span>Courriel</span><input v-model="courriel" type="email" required autocomplete="email" /></label>
         <label class="champ"><span>Mot de passe</span><input v-model="motDePasse" type="password" required autocomplete="current-password" /></label>
-        <div v-if="erreur" class="alerte erreur">{{ erreur }}</div>
+        <div v-if="erreur" class="alerte erreur">
+          {{ erreur }}
+          <button v-if="confirmationRequise && !lienRenvoye" type="button" class="btn lien petit" style="padding: 0" @click="renvoyerLien">
+            Renvoyer le courriel de confirmation
+          </button>
+          <span v-else-if="confirmationRequise && lienRenvoye">Nouveau lien envoyé si le compte existe.</span>
+        </div>
         <button class="btn bloc" :disabled="envoi">{{ envoi ? 'Connexion…' : 'Se connecter' }}</button>
       </form>
       <p class="centre petit" style="margin-top: 1rem">

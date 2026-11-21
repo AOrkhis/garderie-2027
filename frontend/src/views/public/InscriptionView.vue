@@ -1,15 +1,12 @@
 <script setup lang="ts">
 import { reactive, ref } from 'vue'
-import { RouterLink, useRouter } from 'vue-router'
+import { RouterLink } from 'vue-router'
 import { api } from '@/api/client'
-import type { Jetons } from '@/api/types'
-import { useAuthStore } from '@/stores/auth'
 
-const auth = useAuthStore()
-const router = useRouter()
 const f = reactive({ nomGarderie: '', adresse: '', telephone: '', prenom: '', nom: '', courriel: '', motDePasse: '', confirmation: '' })
 const erreur = ref('')
 const envoi = ref(false)
+const enAttente = ref(false)
 
 async function inscrire() {
   erreur.value = ''
@@ -17,8 +14,8 @@ async function inscrire() {
   envoi.value = true
   try {
     const corps = { ...f, confirmation: undefined }
-    await auth.ouvrirSession(await api<Jetons>('/auth/inscription-garderie', { method: 'POST', body: corps, auth: false }))
-    router.push({ path: '/garderie/aujourd-hui', query: { bienvenue: '1' } })
+    await api<{ confirmerCourriel: boolean }>('/auth/inscription-garderie', { method: 'POST', body: corps, auth: false })
+    enAttente.value = true
   } catch (e) {
     erreur.value = (e as Error).message
   } finally {
@@ -31,6 +28,20 @@ async function inscrire() {
   <div class="conteneur" style="max-width: 640px">
     <RouterLink to="/" class="btn lien petit" style="padding-left: 0">‹ Accueil</RouterLink>
     <div class="carte auth">
+      <template v-if="enAttente">
+        <div class="centre">
+          <div class="courrier">✉️</div>
+          <h1>Vérifiez votre courriel</h1>
+          <p class="doux">
+            Votre garderie <strong>{{ f.nomGarderie }}</strong> a été créée.<br />
+            Un courriel de confirmation a été envoyé à <strong>{{ f.courriel }}</strong>.
+            Cliquez sur le lien pour activer votre compte (valide 48 h).<br />
+            Pensez à vérifier vos indésirables.
+          </p>
+          <RouterLink to="/connexion" class="btn bloc" style="margin-top: 1rem">Aller à la connexion</RouterLink>
+        </div>
+      </template>
+      <template v-else>
       <h1>Créer ma garderie</h1>
       <p class="doux">Quelques informations pour démarrer. Vous pourrez tout modifier plus tard.</p>
       <form @submit.prevent="inscrire">
@@ -60,11 +71,16 @@ async function inscrire() {
         <button class="btn bloc" :disabled="envoi">{{ envoi ? 'Création…' : 'Créer ma garderie' }}</button>
         <p class="centre petit" style="margin-top: 1rem">Déjà inscrit ? <RouterLink to="/connexion">Se connecter</RouterLink></p>
       </form>
+      </template>
     </div>
   </div>
 </template>
 
 <style scoped>
+.courrier {
+  font-size: 3rem;
+  margin-bottom: 0.5rem;
+}
 .auth {
   padding: 2rem;
 }

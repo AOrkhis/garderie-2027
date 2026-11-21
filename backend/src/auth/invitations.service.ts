@@ -191,6 +191,12 @@ export class InvitationsService {
         );
       }
 
+      // Le lien d'invitation prouve l'accès à la boîte : courriel confirmé.
+      if (!user.courrielConfirmeLe) {
+        user.courrielConfirmeLe = new Date();
+        user = await m.save(user);
+      }
+
       let adhesion = await m.findOneBy(Adhesion, {
         utilisateurId: user.id,
         garderieId: inv.garderieId,

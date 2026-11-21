@@ -55,6 +55,14 @@ export class ChangerMotDePasseDto {
   @IsString() @MinLength(8) @MaxLength(100) nouveau: string;
 }
 
+export class ConfirmerCourrielDto {
+  @IsString() @IsNotEmpty() jeton: string;
+}
+
+export class RenvoyerConfirmationDto {
+  @Transform(minuscules) @IsEmail() courriel: string;
+}
+
 export class AccepterInvitationDto {
   @IsOptional() @IsString() @IsNotEmpty() @MaxLength(80) prenom?: string;
   @IsOptional() @IsString() @IsNotEmpty() @MaxLength(80) nom?: string;

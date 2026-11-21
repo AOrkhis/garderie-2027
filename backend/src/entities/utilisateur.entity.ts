@@ -43,6 +43,16 @@ export class Utilisateur {
   @Column({ type: 'datetime', nullable: true, select: false })
   jetonReinitialisationExpireLe: Date | null;
 
+  /** Le courriel a été confirmé (obligatoire pour se connecter). */
+  @Column({ type: 'datetime', nullable: true })
+  courrielConfirmeLe: Date | null;
+
+  @Column({ type: 'varchar', length: 64, nullable: true, select: false })
+  jetonConfirmationHash: string | null;
+
+  @Column({ type: 'datetime', nullable: true, select: false })
+  jetonConfirmationExpireLe: Date | null;
+
   @OneToMany(() => Adhesion, (a) => a.utilisateur)
   adhesions: Adhesion[];
 
