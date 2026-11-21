@@ -153,11 +153,12 @@ export class StripeService {
     const garderie = await this.garderies.findOneBy({ id: garderieId });
     if (!garderie) return;
 
+    // Lire l'ancien abonnement AVANT d'écraser la colonne.
+    const ancien = garderie.stripeAbonnementId;
     garderie.stripeClientId = this.idDe(session.customer);
     garderie.stripeAbonnementId = this.idDe(session.subscription);
     garderie.stripeStatut = 'active';
 
-    const ancien = garderie.stripeAbonnementId;
     const abonnement = garderie.stripeAbonnementId
       ? await this.client.subscriptions.retrieve(garderie.stripeAbonnementId)
       : null;
