@@ -2,6 +2,13 @@ import type { Jetons } from './types'
 
 const CLE_JETONS = 'garderie2027.jetons'
 
+// Origine du backend : vide en développement (proxy Vite), ex.
+// https://xxx.up.railway.app en production (variable VITE_API_URL)
+export const BASE_API = ((import.meta.env.VITE_API_URL as string | undefined) ?? '').replace(
+  /\/$/,
+  '',
+)
+
 export class ApiError extends Error {
   constructor(
     message: string,
@@ -29,7 +36,7 @@ export const definirSurDeconnexion = (fn: () => void) => (surDeconnexion = fn)
 async function rafraichir(): Promise<boolean> {
   const j = jetons.lire()
   if (!j) return false
-  const res = await fetch('/api/auth/rafraichir', {
+  const res = await fetch(`${BASE_API}/api/auth/rafraichir`, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({ refreshToken: j.refreshToken }),
@@ -57,7 +64,7 @@ export async function api<T = unknown>(
   const estFormData = body instanceof FormData
   let res: Response
   try {
-    res = await fetch(`/api${chemin}`, {
+    res = await fetch(`${BASE_API}/api${chemin}`, {
       method,
       headers: {
         ...(body !== undefined && !estFormData ? { 'Content-Type': 'application/json' } : {}),

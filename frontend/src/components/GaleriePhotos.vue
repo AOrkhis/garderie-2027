@@ -1,11 +1,16 @@
 <script setup lang="ts">
 import { computed, ref } from 'vue'
 import type { Photo } from '@/api/types'
+import { BASE_API } from '@/api/client'
 import { formaterDate } from '@/utils/format'
 import FenetreModale from './FenetreModale.vue'
 
 const props = defineProps<{ photos: Photo[]; supprimable?: (p: Photo) => boolean; compacte?: boolean }>()
 const emit = defineEmits<{ supprimer: [photo: Photo] }>()
+
+// Le backend renvoie des chemins relatifs « /api/… » : préfixer avec l'origine
+// de l'API en production, garder le relatif en développement (proxy Vite)
+const urlPhoto = (u: string) => (u.startsWith('http') ? u : `${BASE_API}${u}`)
 
 const index = ref<number | null>(null)
 const courante = computed(() => (index.value === null ? null : props.photos[index.value]))
@@ -17,12 +22,12 @@ const deplacer = (d: number) => {
 <template>
   <div class="galerie" :class="{ compacte }">
     <button v-for="(p, i) in photos" :key="p.id" class="vignette" :aria-label="p.legende ?? 'Photo'" @click="index = i">
-      <img :src="p.vignetteUrl" :alt="p.legende ?? ''" loading="lazy" />
+      <img :src="urlPhoto(p.vignetteUrl)" :alt="p.legende ?? ''" loading="lazy" />
     </button>
   </div>
 
   <FenetreModale v-if="courante" :titre="courante.legende || 'Photo'" large @fermer="index = null">
-    <img :src="courante.url" :alt="courante.legende ?? ''" class="grande" />
+    <img :src="urlPhoto(courante.url)" :alt="courante.legende ?? ''" class="grande" />
     <div class="rangee" style="margin-top: 0.75rem">
       <button v-if="photos.length > 1" class="btn secondaire petit" @click="deplacer(-1)">‹ Précédente</button>
       <button v-if="photos.length > 1" class="btn secondaire petit" @click="deplacer(1)">Suivante ›</button>
@@ -31,7 +36,7 @@ const deplacer = (d: number) => {
         {{ formaterDate(courante.date) }}
         <template v-if="courante.enfants?.length"> · {{ courante.enfants.map((e) => e.prenom).join(', ') }}</template>
       </span>
-      <a class="btn secondaire petit" :href="courante.url" download>Télécharger</a>
+      <a class="btn secondaire petit" :href="urlPhoto(courante.url)" download>Télécharger</a>
       <button
         v-if="supprimable?.(courante)"
         class="btn danger petit"
