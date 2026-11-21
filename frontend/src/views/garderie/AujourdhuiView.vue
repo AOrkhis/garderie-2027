@@ -5,6 +5,7 @@ import { api } from '@/api/client'
 import type { EnfantDuJour, Entree, Groupe, Presence, TypeEntree, VueJour } from '@/api/types'
 import AvatarEnfant from '@/components/AvatarEnfant.vue'
 import FormulaireEntree from '@/components/FormulaireEntree.vue'
+import GrilleSaisieRapide from '@/components/GrilleSaisieRapide.vue'
 import IconeEntree from '@/components/IconeEntree.vue'
 import ListeDemarrage from '@/components/ListeDemarrage.vue'
 import NavigationDate from '@/components/NavigationDate.vue'
@@ -23,6 +24,11 @@ const recherche = ref('')
 const selection = ref<number[]>([])
 const formulaire = ref<{ type?: TypeEntree; ids: number[] } | null>(null)
 const occupe = ref(false)
+const mode = ref<'grille' | 'cartes'>(localStorage.getItem('garderie2027.mode') === 'cartes' ? 'cartes' : 'grille')
+watch(mode, (m) => {
+  localStorage.setItem('garderie2027.mode', m)
+  selection.value = []
+})
 
 const enfants = computed(() => vue.value?.enfants ?? [])
 const compte = (p: Presence) => enfants.value.filter((e) => e.presence === p).length
@@ -184,9 +190,13 @@ const ouvrir = (type: TypeEntree | undefined, ids: number[]) => (formulaire.valu
       </div>
 
       <div class="rangee">
+        <div class="onglets bascule-mode" role="tablist" aria-label="Affichage">
+          <button role="tab" :aria-selected="mode === 'grille'" :class="{ actif: mode === 'grille' }" @click="mode = 'grille'">Saisie rapide</button>
+          <button role="tab" :aria-selected="mode === 'cartes'" :class="{ actif: mode === 'cartes' }" @click="mode = 'cartes'">Cartes</button>
+        </div>
         <input v-if="enfants.length > 6" v-model="recherche" type="search" placeholder="Rechercher un enfant…" class="recherche" />
-        <span v-else class="doux petit espace">Astuce : cochez plusieurs enfants pour tout noter en une seule fois.</span>
-        <button v-if="visibles.length" class="btn secondaire petit" @click="basculerVisibles">
+        <span v-else class="espace" />
+        <button v-if="mode === 'cartes' && visibles.length" class="btn secondaire petit" @click="basculerVisibles">
           {{ tousVisiblesChoisis ? 'Tout désélectionner' : 'Tout sélectionner' }}
         </button>
         <button class="btn" :disabled="!enfants.length" @click="ouvrir(undefined, selection)">+ Nouvelle entrée</button>
@@ -202,7 +212,15 @@ const ouvrir = (type: TypeEntree | undefined, ids: number[]) => (formulaire.valu
       <div v-for="i in 6" :key="i" class="squelette carte" />
     </div>
 
-    <div class="grille">
+    <GrilleSaisieRapide
+      v-if="mode === 'grille' && vue && visibles.length"
+      :enfants="visibles"
+      :date="estAujourdhui ? undefined : vue.date"
+      @actualiser="charger"
+      @ouvrir="ouvrir"
+    />
+
+    <div v-if="mode === 'cartes'" class="grille">
       <article
         v-for="e in visibles"
         :key="e.id"
@@ -259,7 +277,7 @@ const ouvrir = (type: TypeEntree | undefined, ids: number[]) => (formulaire.valu
 
     <!-- Barre d'actions groupées -->
     <Transition name="glisse">
-      <div v-if="selection.length" class="barre-groupee">
+      <div v-if="mode === 'cartes' && selection.length" class="barre-groupee">
         <div class="interieur">
           <div class="rangee">
             <strong>{{ selection.length }} sélectionné(s)</strong>
@@ -320,11 +338,12 @@ const ouvrir = (type: TypeEntree | undefined, ids: number[]) => (formulaire.valu
 .compteurs button {
   display: flex;
   flex-direction: column;
-  align-items: center;
+  align-items: flex-start;
   background: #fff;
-  border: 1.5px solid var(--c-bord);
-  border-radius: 14px;
-  padding: 0.6rem 0.25rem;
+  border: 1px solid var(--c-bord);
+  border-radius: 10px;
+  box-shadow: var(--ombre);
+  padding: 0.65rem 0.9rem;
   font: inherit;
   cursor: pointer;
   color: inherit;
@@ -334,19 +353,21 @@ const ouvrir = (type: TypeEntree | undefined, ids: number[]) => (formulaire.valu
     transform 0.1s;
 }
 .compteurs button:hover {
-  border-color: var(--c-primaire);
+  border-color: var(--c-bord-fort);
 }
 .compteurs button:active {
   transform: scale(0.97);
 }
 .compteurs strong {
-  font-size: 1.5rem;
-  line-height: 1.1;
-  font-weight: 900;
+  font-size: 1.45rem;
+  line-height: 1.15;
+  font-weight: 650;
+  letter-spacing: -0.02em;
+  font-variant-numeric: tabular-nums;
 }
 .compteurs span {
-  font-size: 0.78rem;
-  font-weight: 700;
+  font-size: 0.76rem;
+  font-weight: 500;
   color: var(--c-texte-doux);
 }
 .compteurs .present strong {
@@ -360,7 +381,10 @@ const ouvrir = (type: TypeEntree | undefined, ids: number[]) => (formulaire.valu
 }
 .compteurs button.actif {
   border-color: var(--c-primaire);
-  background: var(--c-primaire-clair);
+  box-shadow: 0 0 0 1px var(--c-primaire);
+}
+.bascule-mode {
+  margin-bottom: 0;
 }
 .recherche {
   flex: 1;
@@ -370,22 +394,21 @@ const ouvrir = (type: TypeEntree | undefined, ids: number[]) => (formulaire.valu
   display: flex;
   flex-direction: column;
   gap: 0.6rem;
-  border-left: 5px solid var(--c-bord);
+  border-left: 3px solid var(--c-bord);
   transition:
     outline 0.1s,
     transform 0.15s ease,
     box-shadow 0.15s ease;
 }
 .enfant:hover {
-  transform: translateY(-2px);
   box-shadow: var(--ombre-forte);
 }
 .enfant.parti {
   opacity: 0.75;
 }
 .enfant.choisi {
-  outline: 2.5px solid var(--c-primaire);
-  background: #faf8ff;
+  outline: 2px solid var(--c-primaire);
+  background: #fafaff;
 }
 .haut {
   display: flex;
@@ -397,8 +420,8 @@ const ouvrir = (type: TypeEntree | undefined, ids: number[]) => (formulaire.valu
 .case-choix {
   width: 26px;
   height: 26px;
-  border: 2px solid var(--c-bord);
-  border-radius: 8px;
+  border: 1.5px solid var(--c-bord-fort);
+  border-radius: 6px;
   display: inline-flex;
   align-items: center;
   justify-content: center;
@@ -423,13 +446,14 @@ const ouvrir = (type: TypeEntree | undefined, ids: number[]) => (formulaire.valu
 .allergie {
   background: var(--c-danger-clair);
   color: var(--c-danger);
-  border-radius: 10px;
-  padding: 0.4rem 0.65rem;
-  font-weight: 700;
+  border: 1px solid #fecaca;
+  border-radius: 8px;
+  padding: 0.35rem 0.6rem;
+  font-weight: 500;
 }
 .sieste {
-  background: #eceaff;
-  border-radius: 12px;
+  background: var(--c-primaire-clair);
+  border-radius: 8px;
   padding: 0.5rem 0.65rem;
   flex-wrap: nowrap;
 }
@@ -438,7 +462,8 @@ const ouvrir = (type: TypeEntree | undefined, ids: number[]) => (formulaire.valu
   gap: 0.5rem;
   align-items: flex-start;
   background: var(--c-fond);
-  border-radius: 12px;
+  border: 1px solid var(--c-bord);
+  border-radius: 8px;
   padding: 0.5rem 0.65rem;
 }
 .infos {
@@ -459,9 +484,9 @@ const ouvrir = (type: TypeEntree | undefined, ids: number[]) => (formulaire.valu
   bottom: 1rem;
   z-index: 30;
   width: min(960px, calc(100% - 1.5rem));
-  background: #2b2640;
-  border-radius: 18px;
-  box-shadow: 0 16px 48px rgb(20 14 40 / 0.4);
+  background: #0f172a;
+  border-radius: 12px;
+  box-shadow: 0 16px 48px rgb(15 23 42 / 0.35);
   color: #fff;
 }
 .barre-groupee .interieur {

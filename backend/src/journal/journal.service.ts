@@ -54,7 +54,10 @@ export class JournalService {
   }
 
   static resume(
-    entrees: Pick<EntreeJournal, 'type' | 'heure' | 'donnees' | 'photos'>[],
+    entrees: Pick<
+      EntreeJournal,
+      'id' | 'type' | 'heure' | 'donnees' | 'photos'
+    >[],
   ) {
     const d = (e: (typeof entrees)[number]) =>
       e.donnees as Record<string, string>;
@@ -64,7 +67,12 @@ export class JournalService {
       arrivee: de(TypeEntree.ARRIVEE)[0]?.heure ?? null,
       depart: de(TypeEntree.DEPART).at(-1)?.heure ?? null,
       repas: de(TypeEntree.REPAS)
-        .map((e) => ({ moment: d(e).moment, quantite: d(e).quantite }))
+        .map((e) => ({
+          id: e.id,
+          moment: d(e).moment,
+          quantite: d(e).quantite,
+          menu: d(e).menu ?? null,
+        }))
         .sort(
           (a, b) =>
             MOMENTS_REPAS.indexOf(a.moment) - MOMENTS_REPAS.indexOf(b.moment),
@@ -80,6 +88,9 @@ export class JournalService {
       humeur: de(TypeEntree.HUMEUR).at(-1)
         ? d(de(TypeEntree.HUMEUR).at(-1)!).humeur
         : null,
+      humeurId: de(TypeEntree.HUMEUR).at(-1)?.id ?? null,
+      nombreHygiene: de(TypeEntree.HYGIENE).length,
+      derniereHygiene: de(TypeEntree.HYGIENE).at(-1)?.heure ?? null,
       nombreActivites: de(TypeEntree.ACTIVITE).length,
       nombrePhotos: new Set(
         entrees.flatMap((e) => (e.photos ?? []).map((p) => p.id)),

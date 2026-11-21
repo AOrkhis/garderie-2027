@@ -61,7 +61,7 @@ const emit = defineEmits<{ modifier: [entree: Entree]; supprimer: [entree: Entre
   border-radius: 2px;
 }
 .heure {
-  font-weight: 800;
+  font-weight: 600;
   color: var(--c-texte-doux);
   padding-top: 0.55rem;
   font-size: 0.85rem;

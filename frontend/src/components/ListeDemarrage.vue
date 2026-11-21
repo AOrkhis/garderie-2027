@@ -79,7 +79,7 @@ function masquer() {
 }
 .barre div {
   height: 100%;
-  background: linear-gradient(90deg, #7c5cf0, var(--c-primaire-fonce));
+  background: var(--c-primaire);
   border-radius: 999px;
   transition: width 0.3s;
 }

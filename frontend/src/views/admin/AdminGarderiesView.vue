@@ -181,7 +181,7 @@ async function basculerFonctionnalite(g: GarderieAdmin, cle: string) {
 }
 .mini strong {
   font-size: 1.4rem;
-  font-weight: 900;
+  font-weight: 700;
   color: var(--c-primaire-fonce);
 }
 .choix-plan {

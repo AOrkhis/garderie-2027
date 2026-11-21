@@ -4,7 +4,7 @@ import { initiales } from '@/utils/format'
 
 const props = defineProps<{ personne: { prenom: string; nom: string }; couleur?: string | null; taille?: number }>()
 
-const PALETTE = ['#6a4fd8', '#e8833a', '#2ea97c', '#e0609b', '#2b9fd8', '#8b5cf6', '#d9a514']
+const PALETTE = ['#4f46e5', '#ea580c', '#059669', '#db2777', '#0284c7', '#7c3aed', '#ca8a04']
 const fond = computed(
   () => props.couleur || PALETTE[(props.personne.prenom.charCodeAt(0) + props.personne.nom.length) % PALETTE.length],
 )

@@ -36,7 +36,7 @@ onUnmounted(() => {
 .fond {
   position: fixed;
   inset: 0;
-  background: rgb(28 22 50 / 0.5);
+  background: rgb(15 23 42 / 0.45);
   backdrop-filter: blur(3px);
   -webkit-backdrop-filter: blur(3px);
   display: flex;
@@ -49,7 +49,7 @@ onUnmounted(() => {
 .fenetre {
   width: 100%;
   max-width: 540px;
-  border-radius: 20px;
+  border-radius: 14px;
 }
 .fenetre.large {
   max-width: 780px;

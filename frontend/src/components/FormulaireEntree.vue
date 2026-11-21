@@ -458,12 +458,12 @@ async function enregistrer() {
   align-items: center;
   gap: 0.35rem;
   padding: 0.7rem 0.25rem;
-  border: 1.5px solid var(--c-bord);
-  border-radius: 14px;
+  border: 1px solid var(--c-bord-fort);
+  border-radius: 10px;
   background: #fff;
   font: inherit;
-  font-size: 0.85rem;
-  font-weight: 700;
+  font-size: 0.82rem;
+  font-weight: 500;
   cursor: pointer;
   color: inherit;
   transition:
@@ -472,7 +472,7 @@ async function enregistrer() {
     transform 0.1s;
 }
 .type:hover {
-  border-color: var(--c-primaire);
+  background: var(--c-survol);
 }
 .type:active {
   transform: scale(0.96);
@@ -481,6 +481,8 @@ async function enregistrer() {
   border-color: var(--c-primaire);
   background: var(--c-primaire-clair);
   color: var(--c-primaire-fonce);
+  font-weight: 600;
+  box-shadow: 0 0 0 1px var(--c-primaire);
 }
 .type.verrouille {
   position: relative;

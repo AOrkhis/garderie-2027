@@ -51,7 +51,7 @@ async function action(id: number, executer: () => void | Promise<void>) {
   gap: 0.75rem;
   padding: 0.8rem 1rem;
   border-radius: 14px;
-  background: #2b2640;
+  background: #0f172a;
   color: #fff;
   font-weight: 700;
   box-shadow: 0 10px 30px rgb(20 14 40 / 0.35);

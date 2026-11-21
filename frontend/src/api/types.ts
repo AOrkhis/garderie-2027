@@ -139,10 +139,13 @@ export interface Entree {
 export interface Resume {
   arrivee: string | null
   depart: string | null
-  repas: { moment: string; quantite: string }[]
+  repas: { id: number; moment: string; quantite: string; menu: string | null }[]
   siesteMinutes: number
   siesteEnCours: boolean
   humeur: string | null
+  humeurId: number | null
+  nombreHygiene: number
+  derniereHygiene: string | null
   nombreActivites: number
   nombrePhotos: number
   nombreRemarques: number

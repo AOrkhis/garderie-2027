@@ -150,7 +150,8 @@ function deconnexion() {
   display: flex;
   align-items: center;
   gap: 0.5rem;
-  font-weight: 900;
+  font-weight: 700;
+  letter-spacing: -0.02em;
   font-size: 1.05rem;
   color: var(--c-texte);
   text-decoration: none;
@@ -181,8 +182,8 @@ function deconnexion() {
   justify-content: center;
   background: var(--c-primaire-clair);
   color: var(--c-primaire-fonce);
-  font-weight: 800;
-  font-size: 0.8rem;
+  font-weight: 600;
+  font-size: 0.78rem;
   text-decoration: none;
   flex-shrink: 0;
 }
@@ -248,11 +249,14 @@ function deconnexion() {
     text-decoration: none;
     color: var(--c-texte-doux);
     font-size: 0.63rem;
-    font-weight: 800;
+    font-weight: 600;
     border-radius: 10px;
   }
   .tabs a.router-link-active {
     color: var(--c-primaire);
+  }
+  .tabs a {
+    font-weight: 600 !important;
   }
 }
 
@@ -303,15 +307,15 @@ function deconnexion() {
     text-decoration: none;
     color: var(--c-texte-doux);
     font-size: 0.63rem;
-    font-weight: 800;
+    font-weight: 600;
     text-align: center;
     transition:
       background 0.15s,
       color 0.15s;
   }
   .rail .liens a:hover {
-    background: var(--c-primaire-clair);
-    color: var(--c-primaire-fonce);
+    background: var(--c-survol);
+    color: var(--c-texte);
   }
   .rail .liens a.router-link-active {
     background: var(--c-primaire-clair);
@@ -331,15 +335,16 @@ function deconnexion() {
 /* ---------- Ordinateur : barre latérale complète ---------- */
 @media (min-width: 1100px) {
   .rail {
-    width: 248px;
-    padding: 1.25rem 0.9rem;
+    width: 240px;
+    padding: 1.1rem 0.75rem;
   }
   .rail .logo {
     display: flex;
     align-items: center;
     justify-content: flex-start;
     gap: 0.6rem;
-    font-weight: 900;
+    font-weight: 700;
+  letter-spacing: -0.02em;
     font-size: 1.15rem;
     color: var(--c-texte);
     text-decoration: none;
@@ -355,11 +360,12 @@ function deconnexion() {
   }
   .rail .nom-garderie {
     display: block;
-    font-weight: 800;
-    font-size: 0.9rem;
-    color: var(--c-primaire-fonce);
-    background: var(--c-primaire-clair);
-    border-radius: 10px;
+    font-weight: 600;
+    font-size: 0.85rem;
+    color: var(--c-texte);
+    background: var(--c-survol);
+    border: 1px solid var(--c-bord);
+    border-radius: 8px;
     padding: 0.5rem 0.7rem;
     overflow: hidden;
     text-overflow: ellipsis;
@@ -369,13 +375,14 @@ function deconnexion() {
     flex-direction: row;
     justify-content: flex-start;
     gap: 0.7rem;
-    padding: 0.7rem 0.8rem;
-    font-size: 0.95rem;
+    padding: 0.55rem 0.75rem;
+    font-size: 0.9rem;
+    font-weight: 500;
   }
   .rail .liens a.router-link-active {
-    background: linear-gradient(135deg, #7c5cf0, var(--c-primaire) 60%, var(--c-primaire-fonce));
-    color: #fff;
-    box-shadow: 0 4px 12px rgb(106 79 216 / 0.35);
+    background: var(--c-primaire-clair);
+    color: var(--c-primaire-fonce);
+    font-weight: 600;
   }
   .rail .pied-rail {
     flex-direction: row;
@@ -407,7 +414,7 @@ function deconnexion() {
     font-size: 0.75rem;
   }
   :global(.appli.connecte .zone) {
-    margin-left: 248px;
+    margin-left: 240px;
   }
 }
 </style>

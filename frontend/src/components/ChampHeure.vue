@@ -137,7 +137,7 @@ onUnmounted(() => {
   gap: 0.5rem;
   width: 100%;
   font: inherit;
-  font-weight: 800;
+  font-weight: 600;
   font-size: 1rem;
   padding: 0.6rem 0.7rem;
   border: 1.5px solid var(--c-bord);
@@ -188,7 +188,7 @@ onUnmounted(() => {
   gap: 0.35rem;
 }
 .separateur {
-  font-weight: 800;
+  font-weight: 600;
   color: var(--c-texte-doux);
 }
 .colonne {
@@ -211,7 +211,7 @@ onUnmounted(() => {
   border-radius: 10px;
   background: none;
   font: inherit;
-  font-weight: 800;
+  font-weight: 600;
   font-size: 1rem;
   color: var(--c-texte-doux);
   cursor: pointer;
