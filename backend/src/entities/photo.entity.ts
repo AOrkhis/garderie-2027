@@ -34,6 +34,14 @@ export class Photo {
   @Column({ length: 255 })
   cleVignette: string;
 
+  /** Image redimensionnée (JPEG ≤1920px) — stockée en BD (le disque Railway est éphémère). */
+  @Column({ type: 'longblob', nullable: true, select: false })
+  contenu: Buffer | null;
+
+  /** Vignette JPEG ≤480px. */
+  @Column({ type: 'longblob', nullable: true, select: false })
+  vignette: Buffer | null;
+
   @Column({ type: 'varchar', length: 255, nullable: true })
   legende: string | null;
 

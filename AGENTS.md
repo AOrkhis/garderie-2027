@@ -22,6 +22,7 @@ SaaS pour garderies (tout en français). Spécifications : `CAHIER_DES_CHARGES.m
 - Frontend : messages de succès/erreur via `useNotificationsStore()` (`succes`, `erreur`, `info`, avec action « Annuler » possible) et confirmations via `notif.confirmer({...})` — ne pas utiliser `window.confirm`.
 - Super admins : courriels listés dans `SUPER_ADMIN_COURRIELS` (appliqué au démarrage).
 - Courriels : `BREVO_API_KEY` (API HTTPS, port 443) prime sur le SMTP — nécessaire en prod car Railway bloque les ports 465/587 sortants. SMTP Brevo (`smtp-relay.brevo.com:587`) suffit en local.
+- Photos : binaires stockés en BD (`photos.contenu`/`vignette`, LONGBLOB, `select:false`) — le disque Railway est éphémère. `UPLOAD_DIR` ne sert plus qu'en repli pour les anciennes photos disque locales.
 
 ## Déploiement
 - Repo : https://github.com/AOrkhis/garderie-2027 (public). Push sur `master` → déploiements auto.

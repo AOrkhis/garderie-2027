@@ -88,24 +88,26 @@ export class PhotosService {
     const garderie = await this.garderies.findOneByOrFail({
       id: user.garderieId!,
     });
-    const dossierGarderie = join(this.dossier, String(garderie.id));
-    await fs.mkdir(dossierGarderie, { recursive: true });
 
     const creees: Photo[] = [];
     for (const f of fichiers) {
       const base = `${garderie.id}/${randomUUID()}`;
+      let contenu: Buffer;
+      let vignette: Buffer;
       try {
         const image = sharp(f.buffer).rotate();
-        await image
-          .clone()
-          .resize(1920, 1920, { fit: 'inside', withoutEnlargement: true })
-          .jpeg({ quality: 82 })
-          .toFile(join(this.dossier, `${base}.jpg`));
-        await image
-          .clone()
-          .resize(480, 480, { fit: 'inside', withoutEnlargement: true })
-          .jpeg({ quality: 75 })
-          .toFile(join(this.dossier, `${base}_v.jpg`));
+        [contenu, vignette] = await Promise.all([
+          image
+            .clone()
+            .resize(1920, 1920, { fit: 'inside', withoutEnlargement: true })
+            .jpeg({ quality: 82 })
+            .toBuffer(),
+          image
+            .clone()
+            .resize(480, 480, { fit: 'inside', withoutEnlargement: true })
+            .jpeg({ quality: 75 })
+            .toBuffer(),
+        ]);
       } catch {
         throw new BadRequestException(
           `Le fichier « ${f.originalname} » n'est pas une image valide.`,
@@ -118,6 +120,8 @@ export class PhotosService {
             auteurId: user.utilisateurId,
             cleStockage: `${base}.jpg`,
             cleVignette: `${base}_v.jpg`,
+            contenu,
+            vignette,
             legende: legende?.trim() || null,
             date: dateDuJour(garderie.fuseauHoraire),
             enfants,
@@ -200,19 +204,34 @@ export class PhotosService {
     return photos;
   }
 
-  async cheminFichier(id: number, jeton: string, taille?: string) {
+  async fichierPhoto(
+    id: number,
+    jeton: string,
+    taille?: string,
+  ): Promise<{ buffer?: Buffer; chemin?: string }> {
     try {
       const p = await this.jwt.verifyAsync<{ pid: number; typ: string }>(jeton);
       if (p.typ !== 'photo' || p.pid !== id) throw new Error();
     } catch {
       throw new ForbiddenException('Lien de photo expiré.');
     }
-    const photo = await this.photos.findOneBy({ id });
+    const photo = await this.photos
+      .createQueryBuilder('p')
+      .addSelect('p.contenu')
+      .addSelect('p.vignette')
+      .where('p.id = :id', { id })
+      .getOne();
     if (!photo) throw new NotFoundException('Photo introuvable.');
-    return join(
-      this.dossier,
-      taille === 'vignette' ? photo.cleVignette : photo.cleStockage,
-    );
+    const donnees =
+      taille === 'vignette' ? (photo.vignette ?? photo.contenu) : photo.contenu;
+    if (donnees) return { buffer: donnees as Buffer };
+    // Ancienne photo stockée sur disque (avant le stockage en BD).
+    return {
+      chemin: join(
+        this.dossier,
+        taille === 'vignette' ? photo.cleVignette : photo.cleStockage,
+      ),
+    };
   }
 
   async supprimer(user: UtilisateurConnecte, id: number) {

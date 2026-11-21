@@ -113,10 +113,15 @@ export class PhotosController {
     @Query('taille') taille: string | undefined,
     @Res() res: Response,
   ) {
-    const chemin = await this.service.cheminFichier(id, jeton ?? '', taille);
+    const f = await this.service.fichierPhoto(id, jeton ?? '', taille);
     res.setHeader('Cache-Control', 'private, max-age=3600');
+    if (f.buffer) {
+      res.setHeader('Content-Type', 'image/jpeg');
+      res.setHeader('Content-Length', f.buffer.length);
+      return res.send(f.buffer);
+    }
     res.sendFile(
-      chemin,
+      f.chemin!,
       (err) =>
         err &&
         !res.headersSent &&
