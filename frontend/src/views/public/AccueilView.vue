@@ -226,4 +226,17 @@ const apercu: { type: TypeEntree; heure: string; texte: string }[] = [
     padding: 2.25rem 0;
   }
 }
+@media (max-width: 500px) {
+  .heros .rangee {
+    flex-direction: column;
+    align-items: stretch;
+  }
+  .bandeau {
+    padding: 1.5rem;
+    text-align: center;
+  }
+  .bandeau .btn {
+    width: 100%;
+  }
+}
 </style>

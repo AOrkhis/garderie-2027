@@ -50,7 +50,7 @@ function deconnexion() {
   <header class="topbar">
     <RouterLink :to="auth.connecte ? auth.accueil : '/'" class="logo">
       <LogoMarque :taille="30" />
-      <span>Garderie&nbsp;2027</span>
+      <span class="nom">Garderie&nbsp;2027</span>
     </RouterLink>
 
     <template v-if="auth.connecte">
@@ -62,7 +62,7 @@ function deconnexion() {
     <template v-else>
       <span class="espace" />
       <RouterLink to="/connexion" class="btn secondaire petit">Connexion</RouterLink>
-      <RouterLink to="/inscription" class="btn petit">Créer ma garderie</RouterLink>
+      <RouterLink to="/inscription" class="btn petit">S'inscrire</RouterLink>
     </template>
   </header>
 
@@ -141,6 +141,14 @@ function deconnexion() {
   font-size: 1.05rem;
   color: var(--c-texte);
   text-decoration: none;
+}
+.topbar .btn {
+  white-space: nowrap;
+}
+@media (max-width: 399px) {
+  .topbar .logo .nom {
+    display: none;
+  }
 }
 .espace {
   flex: 1;
