@@ -1,5 +1,9 @@
 <script setup lang="ts">
+import { onMounted, ref } from 'vue'
 import { RouterLink } from 'vue-router'
+import { api } from '@/api/client'
+import type { Forfait } from '@/api/types'
+import { formaterPrix } from '@/utils/format'
 import IconeEntree from '@/components/IconeEntree.vue'
 import LogoMarque from '@/components/LogoMarque.vue'
 import type { TypeEntree } from '@/api/types'
@@ -12,6 +16,11 @@ const atouts: { type: TypeEntree; titre: string; texte: string }[] = [
   { type: 'ACTIVITE', titre: 'Activités', texte: 'Bricolages, jeux et sorties partagés avec les familles concernées.' },
   { type: 'PHOTO', titre: 'Photos privées', texte: 'Visibles uniquement par les parents des enfants identifiés.' },
 ]
+
+const forfaits = ref<Forfait[]>([])
+onMounted(async () => {
+  forfaits.value = await api<Forfait[]>('/forfaits').catch(() => [])
+})
 
 const lignes = [
   { nom: 'Emma L.', couleur: '#4f46e5', arrivee: '8 h 05', repas: 'TOUT', sieste: 'Dort · 12 h 40', change: '2×' },
@@ -147,35 +156,28 @@ const QUANT: [string, string][] = [
       <div class="titre-section">
         <span class="eyebrow">Forfaits</span>
         <h2>Commencez gratuitement</h2>
-        <p class="doux">Chaque nouvelle garderie profite du forfait Pro pendant 30 jours.</p>
+        <p class="doux">Chaque nouvelle garderie profite du forfait Pro pendant 30 jours, sans carte de crédit.</p>
       </div>
       <div class="forfaits">
-        <div class="forfait">
-          <h3>Gratuit</h3>
-          <p class="prix">0 $ <small>/ mois</small></p>
-          <p class="doux">Le journal complet pour bien démarrer.</p>
+        <div v-for="fo in forfaits" :key="fo.plan" class="forfait" :class="{ vedette: fo.plan === 'PRO' }">
+          <span v-if="fo.plan === 'PRO'" class="etiquette-vedette">Le plus populaire</span>
+          <h3>{{ fo.nom }}</h3>
+          <p class="prix">
+            <small v-if="fo.prixAPartirDe">dès </small>{{ formaterPrix(fo.prixMensuel) }} <small>/ mois</small>
+          </p>
+          <p class="annuel">
+            {{ fo.prixAnnuel ? `ou ${formaterPrix(fo.prixAnnuel)} / an — 2 mois offerts` : fo.prixAPartirDe ? 'Contrat annuel personnalisé' : 'Pour toujours' }}
+          </p>
+          <p class="doux desc">{{ fo.description }}</p>
           <ul>
-            <li>Présences, repas, siestes, changes</li>
-            <li>Activités, humeurs et remarques</li>
-            <li>Parents et personnel illimités</li>
-            <li>Groupes d'âge automatiques</li>
+            <li v-for="pt in fo.points" :key="pt">{{ pt }}</li>
           </ul>
-          <RouterLink to="/inscription" class="btn secondaire bloc">Créer ma garderie</RouterLink>
-        </div>
-        <div class="forfait vedette">
-          <span class="etiquette-vedette">Recommandé</span>
-          <h3>Pro</h3>
-          <p class="prix">Sur mesure</p>
-          <p class="doux">Pour partager les moments en images.</p>
-          <ul>
-            <li>Tout le forfait Gratuit</li>
-            <li>Partage de photos privées</li>
-            <li>Photos jointes aux activités</li>
-            <li>Soutien prioritaire</li>
-          </ul>
-          <RouterLink to="/inscription" class="btn bloc">Essayer 30 jours</RouterLink>
+          <RouterLink to="/inscription" class="btn bloc" :class="{ secondaire: fo.plan !== 'PRO' }">
+            {{ fo.plan === 'SUR_MESURE' ? 'Nous contacter' : fo.plan === 'GRATUIT' ? 'Commencer' : 'Essayer 30 jours' }}
+          </RouterLink>
         </div>
       </div>
+      <p class="doux petit taxes">Prix en dollars canadiens, avant TPS et TVQ.</p>
     </section>
 
     <!-- Appel final -->
@@ -574,14 +576,28 @@ const QUANT: [string, string][] = [
 /* ---------- Forfaits ---------- */
 .forfaits {
   display: grid;
-  grid-template-columns: repeat(2, minmax(0, 380px));
-  gap: 1.25rem;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 1rem;
+  align-items: stretch;
+}
+.annuel {
+  font-size: 0.8rem;
+  color: var(--c-texte-doux);
+  margin: 0 0 0.75rem;
+  min-height: 1.2em;
+}
+.desc {
+  font-size: 0.88rem;
+  margin-bottom: 0.25rem;
+}
+.taxes {
+  margin-top: 1.25rem;
 }
 .forfait {
   position: relative;
   border: 1px solid var(--c-bord);
   border-radius: var(--rayon);
-  padding: 1.75rem;
+  padding: 1.5rem 1.35rem;
   box-shadow: var(--ombre);
   display: flex;
   flex-direction: column;
@@ -695,7 +711,8 @@ const QUANT: [string, string][] = [
     padding-top: 3rem;
     padding-bottom: 3rem;
   }
-  .atouts {
+  .atouts,
+  .forfaits {
     grid-template-columns: repeat(2, 1fr);
   }
   .liens-nav {

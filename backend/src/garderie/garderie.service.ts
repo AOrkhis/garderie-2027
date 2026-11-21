@@ -10,7 +10,12 @@ import { ageEnMois, groupePourAge } from '../common/age';
 import { AuditService } from '../common/audit.service';
 import { dateDuJour } from '../common/dates';
 import { UtilisateurConnecte } from '../common/auth.decorators';
-import { fonctionnalitesDe, planEffectif } from '../common/fonctionnalites';
+import {
+  fonctionnalitesDe,
+  limitesDe,
+  planEffectif,
+  verifierLimite,
+} from '../common/fonctionnalites';
 import { Role, ROLES_PERSONNEL, StatutEnfant } from '../common/enums';
 import { InvitationsService } from '../auth/invitations.service';
 import {
@@ -46,11 +51,35 @@ export class GarderieService {
 
   async obtenir(user: UtilisateurConnecte) {
     const g = await this.garderies.findOneByOrFail({ id: user.garderieId! });
+    const [enfants, personnel] = await Promise.all([
+      this.enfants.countBy({ garderieId: g.id, statut: StatutEnfant.ACTIF }),
+      this.comptePersonnel(g.id),
+    ]);
     return {
       ...g,
       planEffectif: planEffectif(g),
       fonctionnalites: fonctionnalitesDe(g),
+      limites: limitesDe(g),
+      utilisation: { enfants, personnel },
     };
+  }
+
+  /** Personnel actif + invitations du personnel en attente. */
+  private async comptePersonnel(garderieId: number) {
+    const [membres, invitations] = await Promise.all([
+      this.adhesions.countBy({
+        garderieId,
+        role: In(ROLES_PERSONNEL),
+        actif: true,
+      }),
+      this.invitations.countBy({
+        garderieId,
+        role: In(ROLES_PERSONNEL),
+        accepteeLe: IsNull(),
+        expireLe: MoreThan(new Date()),
+      }),
+    ]);
+    return membres + invitations;
   }
 
   async modifier(user: UtilisateurConnecte, dto: ModifierGarderieDto) {
@@ -265,6 +294,8 @@ export class GarderieService {
   }
 
   async inviterPersonnel(user: UtilisateurConnecte, dto: InviterPersonnelDto) {
+    const g = await this.garderies.findOneByOrFail({ id: user.garderieId! });
+    verifierLimite(g, 'personnel', await this.comptePersonnel(g.id));
     const dejaMembre = await this.adhesions
       .createQueryBuilder('a')
       .innerJoin('a.utilisateur', 'u')
@@ -366,6 +397,10 @@ export class GarderieService {
       role: In(ROLES_PERSONNEL),
     });
     if (!membre) throw new NotFoundException('Membre introuvable.');
+    if (dto.actif && !membre.actif) {
+      const g = await this.garderies.findOneByOrFail({ id: user.garderieId! });
+      verifierLimite(g, 'personnel', await this.comptePersonnel(g.id));
+    }
     Object.assign(membre, dto);
     await this.adhesions.save(membre);
     await this.audit.consigner(

@@ -2,9 +2,9 @@
 import { computed, onMounted, ref, watch } from 'vue'
 import { RouterLink } from 'vue-router'
 import { api } from '@/api/client'
-import type { Enfant, Groupe } from '@/api/types'
+import type { Enfant, Garderie, Groupe } from '@/api/types'
 import AvatarEnfant from '@/components/AvatarEnfant.vue'
-import { age } from '@/utils/format'
+import { age, PLANS } from '@/utils/format'
 
 const enfants = ref<Enfant[]>([])
 const groupes = ref<Groupe[]>([])
@@ -13,6 +13,11 @@ const statut = ref<'ACTIF' | 'ARCHIVE'>('ACTIF')
 const recherche = ref('')
 const chargement = ref(true)
 const erreur = ref('')
+const garderie = ref<Garderie | null>(null)
+const limite = computed(() => garderie.value?.limites.maxEnfants ?? null)
+const actifs = computed(() => garderie.value?.utilisation.enfants ?? 0)
+const complet = computed(() => limite.value !== null && actifs.value >= limite.value)
+const presqueComplet = computed(() => limite.value !== null && !complet.value && actifs.value >= limite.value * 0.8)
 
 const normaliser = (s: string) => s.normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLowerCase()
 const filtres = computed(() =>
@@ -35,6 +40,7 @@ async function charger() {
 onMounted(async () => {
   groupes.value = await api<Groupe[]>('/groupes').catch(() => [])
   charger()
+  garderie.value = await api<Garderie>('/garderie').catch(() => null)
 })
 watch([groupeId, statut], charger)
 </script>
@@ -46,7 +52,17 @@ watch([groupeId, statut], charger)
         <h1>Enfants</h1>
         <span class="doux">Touchez un enfant pour voir son journal, sa fiche, ses parents et ses photos.</span>
       </div>
-      <RouterLink to="/garderie/enfants/nouveau" class="btn">+ Inscrire un enfant</RouterLink>
+      <RouterLink v-if="!complet" to="/garderie/enfants/nouveau" class="btn">+ Inscrire un enfant</RouterLink>
+      <button v-else class="btn" disabled title="Limite du forfait atteinte">+ Inscrire un enfant</button>
+    </div>
+
+    <div v-if="complet" class="alerte erreur">
+      <strong>Limite atteinte :</strong> {{ actifs }} / {{ limite }} enfants actifs pour le forfait {{ PLANS[garderie!.planEffectif] }}.
+      Archivez un enfant parti ou <RouterLink to="/garderie/parametres">changez de forfait</RouterLink>.
+    </div>
+    <div v-else-if="presqueComplet" class="alerte avert">
+      {{ actifs }} / {{ limite }} enfants actifs — vous approchez de la limite du forfait {{ PLANS[garderie!.planEffectif] }}.
+      <RouterLink to="/garderie/parametres">Voir les forfaits</RouterLink>
     </div>
 
     <div class="carte rangee" style="margin-bottom: 1rem">

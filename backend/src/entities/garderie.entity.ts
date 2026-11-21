@@ -54,6 +54,13 @@ export class Garderie {
   @Column({ type: 'json' })
   fonctionnalitesExtra: string[];
 
+  /** Limites fixées par le super admin (null = celles du forfait). */
+  @Column({ type: 'int', nullable: true })
+  maxEnfantsPerso: number | null;
+
+  @Column({ type: 'int', nullable: true })
+  maxPersonnelPerso: number | null;
+
   @CreateDateColumn()
   creeLe: Date;
 

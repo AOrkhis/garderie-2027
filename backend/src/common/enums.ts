@@ -11,7 +11,9 @@ export enum StatutGarderie {
 
 export enum PlanGarderie {
   GRATUIT = 'GRATUIT',
+  FAMILIAL = 'FAMILIAL',
   PRO = 'PRO',
+  SUR_MESURE = 'SUR_MESURE',
 }
 
 export enum StatutEnfant {

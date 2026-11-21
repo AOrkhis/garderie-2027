@@ -97,7 +97,7 @@ export class PhotosService {
           code: 'FONCTIONNALITE_PAYANTE',
           fonctionnalite: 'photos',
           message:
-            'La publication de photos nécessite le forfait Pro. Contactez-nous pour passer au forfait Pro.',
+            'La publication de photos nécessite le forfait Familial, Pro ou Sur mesure. Contactez-nous pour changer de forfait.',
         },
         HttpStatus.PAYMENT_REQUIRED,
       );

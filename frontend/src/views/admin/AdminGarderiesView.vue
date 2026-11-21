@@ -3,7 +3,7 @@ import { computed, onMounted, ref } from 'vue'
 import { api } from '@/api/client'
 import type { GarderieAdmin, PlanGarderie } from '@/api/types'
 import { useNotificationsStore } from '@/stores/notifications'
-import { formaterDate } from '@/utils/format'
+import { formaterDate, PLANS } from '@/utils/format'
 
 interface Fonctionnalite {
   cle: string
@@ -29,7 +29,7 @@ const enEssai = (g: GarderieAdmin) => !!g.essaiJusquau && new Date(g.essaiJusqua
 const totaux = computed(() => ({
   total: garderies.value.length,
   actives: garderies.value.filter((g) => g.statut === 'ACTIVE').length,
-  pro: garderies.value.filter((g) => g.planEffectif === 'PRO').length,
+  payants: garderies.value.filter((g) => g.plan !== 'GRATUIT').length,
   essais: garderies.value.filter(enEssai).length,
 }))
 
@@ -47,8 +47,22 @@ async function modifier(g: GarderieAdmin, champs: Record<string, unknown>, messa
 
 async function changerPlan(g: GarderieAdmin, e: Event) {
   const plan = (e.target as HTMLSelectElement).value as PlanGarderie
-  await modifier(g, { plan }, plan === 'PRO' ? `« ${g.nom} » est maintenant Pro.` : `« ${g.nom} » repasse au forfait Gratuit.`)
+  await modifier(g, { plan }, `« ${g.nom} » passe au forfait ${PLANS[plan]}.`)
 }
+
+/** Champ vide = revenir à la limite du forfait. */
+async function changerLimite(g: GarderieAdmin, champ: 'maxEnfantsPerso' | 'maxPersonnelPerso', e: Event) {
+  const brut = (e.target as HTMLInputElement).value.trim()
+  const valeur = brut === '' ? null : Number(brut)
+  if (valeur !== null && (!Number.isInteger(valeur) || valeur < 0)) return notif.erreur(new Error('Entrez un nombre entier positif.'))
+  if (valeur === g[champ]) return
+  await modifier(
+    g,
+    { [champ]: valeur },
+    valeur === null ? 'Limite du forfait rétablie.' : `Limite fixée à ${valeur} ${champ === 'maxEnfantsPerso' ? 'enfants' : 'comptes du personnel'}.`,
+  )
+}
+const plein = (n: number, max: number | null) => max !== null && n >= max
 
 function prolongerEssai(g: GarderieAdmin) {
   const base = enEssai(g) ? new Date(g.essaiJusquau!).getTime() : Date.now()
@@ -91,7 +105,7 @@ async function basculerFonctionnalite(g: GarderieAdmin, cle: string) {
     <div v-if="garderies.length" class="resume">
       <div class="mini"><strong>{{ totaux.total }}</strong><small class="doux">garderies</small></div>
       <div class="mini"><strong>{{ totaux.actives }}</strong><small class="doux">actives</small></div>
-      <div class="mini"><strong>{{ totaux.pro }}</strong><small class="doux">forfait Pro</small></div>
+      <div class="mini"><strong>{{ totaux.payants }}</strong><small class="doux">forfaits payants</small></div>
       <div class="mini"><strong>{{ totaux.essais }}</strong><small class="doux">en essai</small></div>
     </div>
 
@@ -109,16 +123,19 @@ async function basculerFonctionnalite(g: GarderieAdmin, cle: string) {
               <td class="petit">{{ formaterDate(g.creeLe) }}</td>
               <td>
                 <select class="choix-plan" :value="g.plan" @change="changerPlan(g, $event)">
-                  <option value="GRATUIT">Gratuit</option>
-                  <option value="PRO">Pro</option>
+                  <option v-for="(l, k) in PLANS" :key="k" :value="k">{{ l }}</option>
                 </select>
                 <div class="petit" style="margin-top: 0.25rem">
                   <span v-if="enEssai(g)" class="badge orange">Essai jusqu'au {{ formaterDate(g.essaiJusquau!) }}</span>
                   <button class="btn lien petit" style="padding: 0; min-height: 0" @click="prolongerEssai(g)">+30 j d'essai</button>
                 </div>
               </td>
-              <td>{{ g.statistiques.enfants }}</td>
-              <td>{{ g.statistiques.personnel }}</td>
+              <td :class="{ depasse: plein(g.statistiques.enfants, g.limites.maxEnfants) }">
+                {{ g.statistiques.enfants }}<small class="doux"> / {{ g.limites.maxEnfants ?? '∞' }}</small>
+              </td>
+              <td :class="{ depasse: plein(g.statistiques.personnel, g.limites.maxPersonnel) }">
+                {{ g.statistiques.personnel }}<small class="doux"> / {{ g.limites.maxPersonnel ?? '∞' }}</small>
+              </td>
               <td>{{ g.statistiques.parents }}</td>
               <td>{{ g.statistiques.entrees }}</td>
               <td>{{ g.statistiques.photos }}</td>
@@ -141,10 +158,36 @@ async function basculerFonctionnalite(g: GarderieAdmin, cle: string) {
                         @change="basculerFonctionnalite(g, f.cle)"
                       />
                       {{ f.libelle }}
-                      <small v-if="g.fonctionnalitesPlan.includes(f.cle)" class="doux">— inclus dans {{ g.planEffectif === 'PRO' ? 'Pro' : 'le plan' }}</small>
+                      <small v-if="g.fonctionnalitesPlan.includes(f.cle)" class="doux">— inclus dans {{ PLANS[g.planEffectif] }}</small>
                       <small v-else-if="(g.fonctionnalitesExtra ?? []).includes(f.cle)" class="badge vert">accordé</small>
                     </label>
                     <p v-if="!catalogue.length" class="doux petit">Aucune fonctionnalité payante pour l'instant.</p>
+                  </div>
+                  <div>
+                    <h3>Limites</h3>
+                    <label class="champ-limite">
+                      <span>Enfants actifs max.</span>
+                      <input
+                        type="number"
+                        min="0"
+                        inputmode="numeric"
+                        :value="g.maxEnfantsPerso ?? ''"
+                        :placeholder="`Forfait : ${g.limites.maxEnfants ?? 'illimité'}`"
+                        @change="changerLimite(g, 'maxEnfantsPerso', $event)"
+                      />
+                    </label>
+                    <label class="champ-limite">
+                      <span>Personnel max.</span>
+                      <input
+                        type="number"
+                        min="0"
+                        inputmode="numeric"
+                        :value="g.maxPersonnelPerso ?? ''"
+                        :placeholder="`Forfait : ${g.limites.maxPersonnel ?? 'illimité'}`"
+                        @change="changerLimite(g, 'maxPersonnelPerso', $event)"
+                      />
+                    </label>
+                    <p class="doux petit" style="margin: 0">Laissez vide pour utiliser la limite du forfait. Idéal pour le forfait Sur mesure.</p>
                   </div>
                   <div>
                     <h3>Équipe (admins)</h3>
@@ -213,6 +256,23 @@ async function basculerFonctionnalite(g: GarderieAdmin, cle: string) {
   display: grid;
   gap: 0.3rem;
   font-size: 0.9rem;
+}
+.depasse {
+  color: var(--c-danger);
+  font-weight: 600;
+}
+.champ-limite {
+  display: grid;
+  grid-template-columns: 1fr 130px;
+  align-items: center;
+  gap: 0.6rem;
+  margin-bottom: 0.5rem;
+  font-size: 0.88rem;
+}
+.champ-limite input {
+  padding: 0.35rem 0.6rem;
+  font-size: 0.9rem;
+  min-height: 34px;
 }
 .case {
   display: flex;

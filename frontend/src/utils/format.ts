@@ -1,4 +1,4 @@
-import type { LienParent, Presence, Role, TypeEntree } from '@/api/types'
+import type { LienParent, PlanGarderie, Presence, Role, TypeEntree } from '@/api/types'
 
 const enDate = (iso: string) => new Date(`${iso.slice(0, 10)}T12:00:00`)
 
@@ -83,6 +83,16 @@ export const ROLES: Record<Role, string> = {
   GESTIONNAIRE: 'Gestionnaire',
   PARENT: 'Parent',
 }
+
+export const PLANS: Record<PlanGarderie, string> = {
+  GRATUIT: 'Gratuit',
+  FAMILIAL: 'Familial',
+  PRO: 'Pro',
+  SUR_MESURE: 'Sur mesure',
+}
+
+/** « 79 $ », « 1 490 $ » */
+export const formaterPrix = (n: number) => `${new Intl.NumberFormat('fr-CA').format(n)} $`
 
 export const LIENS: Record<LienParent, string> = {
   MERE: 'Mère',

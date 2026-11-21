@@ -10,6 +10,7 @@ import { AuditService } from '../common/audit.service';
 import { UtilisateurConnecte } from '../common/auth.decorators';
 import { dateDuJour } from '../common/dates';
 import { Role, StatutEnfant } from '../common/enums';
+import { verifierLimite } from '../common/fonctionnalites';
 import { MailService } from '../common/mail.service';
 import { InvitationsService } from '../auth/invitations.service';
 import {
@@ -108,7 +109,17 @@ export class EnfantsService {
     );
   }
 
+  /** Bloque l'ajout d'un enfant actif au-delà de la limite du forfait. */
+  private async verifierPlace(garderieId: number) {
+    const [g, actifs] = await Promise.all([
+      this.garderies.findOneByOrFail({ id: garderieId }),
+      this.enfants.countBy({ garderieId, statut: StatutEnfant.ACTIF }),
+    ]);
+    verifierLimite(g, 'enfants', actifs);
+  }
+
   async creer(user: UtilisateurConnecte, dto: EnfantDto) {
+    await this.verifierPlace(user.garderieId!);
     await this.verifierGroupe(user, dto.groupeId);
     // Sans groupe précisé : affectation automatique selon l'âge de l'enfant.
     const groupeId =
@@ -151,6 +162,11 @@ export class EnfantsService {
     dto: ModifierEnfantDto,
   ) {
     const enfant = await this.verifierAcces(user, id);
+    if (
+      dto.statut === StatutEnfant.ACTIF &&
+      enfant.statut !== StatutEnfant.ACTIF
+    )
+      await this.verifierPlace(user.garderieId!);
     await this.verifierGroupe(user, dto.groupeId);
     const { contactsUrgence, groupeAuto, ...champs } = dto;
     // Groupe recalculé selon l'âge si demandé, ou si la date de naissance change

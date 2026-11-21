@@ -17,7 +17,26 @@ export interface Jetons {
   refreshToken: string
 }
 
-export type PlanGarderie = 'GRATUIT' | 'PRO'
+export type PlanGarderie = 'GRATUIT' | 'FAMILIAL' | 'PRO' | 'SUR_MESURE'
+
+/** null = illimité */
+export interface Limites {
+  maxEnfants: number | null
+  maxPersonnel: number | null
+}
+
+export interface Forfait {
+  plan: PlanGarderie
+  nom: string
+  description: string
+  prixMensuel: number
+  prixAnnuel: number | null
+  prixAPartirDe: boolean
+  maxEnfants: number | null
+  maxPersonnel: number | null
+  fonctionnalites: string[]
+  points: string[]
+}
 
 export interface Adhesion {
   id: number
@@ -30,6 +49,7 @@ export interface Adhesion {
     plan: PlanGarderie
     planEffectif: PlanGarderie
     fonctionnalites: string[]
+    limites: Limites
     essaiJusquau: string | null
   }
 }
@@ -60,6 +80,8 @@ export interface Garderie {
   planEffectif: PlanGarderie
   essaiJusquau: string | null
   fonctionnalites: string[]
+  limites: Limites
+  utilisation: { enfants: number; personnel: number }
   creeLe: string
 }
 
@@ -232,7 +254,9 @@ export interface EnfantParent extends Enfant {
   nombreEntreesAujourdhui: number
 }
 
-export interface GarderieAdmin extends Garderie {
+export interface GarderieAdmin extends Omit<Garderie, 'utilisation' | 'fonctionnalites'> {
+  maxEnfantsPerso: number | null
+  maxPersonnelPerso: number | null
   fonctionnalitesPlan: string[]
   fonctionnalitesEffectives: string[]
   fonctionnalitesExtra: string[]

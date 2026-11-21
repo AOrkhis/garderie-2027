@@ -14,6 +14,9 @@ import {
   IsDateString,
   IsEnum,
   IsIn,
+  IsInt,
+  Max,
+  Min,
   IsOptional,
   IsString,
 } from 'class-validator';
@@ -29,6 +32,7 @@ import {
   Fonctionnalite,
   fonctionnalitesDe,
   fonctionnalitesDuPlan,
+  limitesDe,
   planEffectif,
 } from '../common/fonctionnalites';
 import {
@@ -50,6 +54,9 @@ class ModifierGarderieAdminDto {
   @IsString({ each: true })
   @IsIn(CLES_FONCTIONNALITES, { each: true })
   fonctionnalitesExtra?: string[];
+  /** null = revenir à la limite du forfait. */
+  @IsOptional() @IsInt() @Min(0) @Max(100000) maxEnfantsPerso?: number | null;
+  @IsOptional() @IsInt() @Min(0) @Max(100000) maxPersonnelPerso?: number | null;
 }
 
 async function compter(
@@ -122,6 +129,7 @@ export class SuperAdminController {
       planEffectif: planEffectif(g),
       fonctionnalitesPlan: fonctionnalitesDuPlan(g),
       fonctionnalitesEffectives: fonctionnalitesDe(g),
+      limites: limitesDe(g),
       admins: admins.get(g.id) ?? [],
       statistiques: {
         enfants: enfants.get(g.id) ?? 0,
@@ -150,6 +158,10 @@ export class SuperAdminController {
       champs.fonctionnalitesExtra = dto.fonctionnalitesExtra.filter((f) =>
         CLES_FONCTIONNALITES.includes(f as Fonctionnalite),
       );
+    if (dto.maxEnfantsPerso !== undefined)
+      champs.maxEnfantsPerso = dto.maxEnfantsPerso;
+    if (dto.maxPersonnelPerso !== undefined)
+      champs.maxPersonnelPerso = dto.maxPersonnelPerso;
     if (!Object.keys(champs).length)
       throw new BadRequestException('Aucune modification fournie.');
     const res = await this.garderies.update({ id }, champs);
@@ -169,6 +181,7 @@ export class SuperAdminController {
       planEffectif: planEffectif(g),
       fonctionnalitesPlan: fonctionnalitesDuPlan(g),
       fonctionnalitesEffectives: fonctionnalitesDe(g),
+      limites: limitesDe(g),
     };
   }
 }
