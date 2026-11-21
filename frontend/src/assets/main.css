@@ -376,6 +376,24 @@ input[type='time'] {
   color: var(--c-avert);
 }
 
+/* Éléments verrouillés derrière le forfait Pro */
+.btn-pro {
+  position: relative;
+}
+.badge-pro {
+  position: absolute;
+  top: -8px;
+  right: -6px;
+  background: linear-gradient(135deg, #f0a63a, #e0862a);
+  color: #fff;
+  font-size: 0.58rem;
+  font-weight: 800;
+  letter-spacing: 0.03em;
+  padding: 0.1rem 0.4rem;
+  border-radius: 999px;
+  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.18);
+}
+
 /* Tableaux */
 .tableau {
   width: 100%;

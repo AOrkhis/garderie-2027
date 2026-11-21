@@ -274,7 +274,13 @@ const ouvrir = (type: TypeEntree | undefined, ids: number[]) => (formulaire.valu
             <button class="btn secondaire petit" @click="ouvrir('SIESTE', selection)">Sieste</button>
             <button v-if="choisis.some((e) => e.siesteEnCours)" class="btn secondaire petit" :disabled="occupe" @click="reveil(choisis)">Réveil</button>
             <button class="btn secondaire petit" @click="ouvrir('ACTIVITE', selection)">Activité</button>
-            <button class="btn secondaire petit" @click="ouvrir('PHOTO', selection)">Photo</button>
+            <button
+              class="btn secondaire petit btn-pro"
+              :title="!auth.aFonctionnalite('photos') ? 'Fonctionnalité Pro' : undefined"
+              @click="ouvrir('PHOTO', selection)"
+            >
+              Photo<span v-if="!auth.aFonctionnalite('photos')" class="badge-pro">Pro</span>
+            </button>
             <button class="btn secondaire petit" @click="ouvrir('REMARQUE', selection)">Remarque</button>
             <button class="btn secondaire petit" @click="ouvrir(undefined, selection)">Autre…</button>
           </div>

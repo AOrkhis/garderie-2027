@@ -35,9 +35,8 @@ const emit = defineEmits<{ fermer: []; enregistre: [message: string, ids: number
 
 const auth = useAuthStore()
 const TYPES_SAISIE: TypeEntree[] = ['ARRIVEE', 'DEPART', 'REPAS', 'SIESTE', 'ACTIVITE', 'HYGIENE', 'HUMEUR', 'REMARQUE', 'PHOTO']
-const typesDisponibles = computed(() =>
-  TYPES_SAISIE.filter((t) => t !== 'PHOTO' || auth.aFonctionnalite('photos')),
-)
+const photosVerrouillees = computed(() => !auth.aFonctionnalite('photos'))
+const avisPro = ref(false)
 const REQUIS: Partial<Record<TypeEntree, [string, string][]>> = {
   REPAS: [['moment', 'le moment du repas']],
   SIESTE: [['debut', "l'heure de début de la sieste"]],
@@ -102,6 +101,11 @@ watch(fichiers, (liste) => {
 onUnmounted(() => apercus.value.forEach(URL.revokeObjectURL))
 
 function choisirType(t: TypeEntree) {
+  if (t === 'PHOTO' && photosVerrouillees.value) {
+    avisPro.value = true
+    return
+  }
+  avisPro.value = false
   type.value = t
   for (const k of Object.keys(d)) delete d[k]
   if (t === 'SIESTE') d.debut = heure.value
@@ -153,6 +157,8 @@ const libelleEnfants = () =>
 
 async function enregistrer() {
   erreur.value = ''
+  if (type.value === 'PHOTO' && photosVerrouillees.value)
+    return (erreur.value = 'Le partage de photos nécessite le forfait Pro.')
   if (!heure.value) return (erreur.value = "Choisissez l'heure.")
   if (!choisis.value.length) return (erreur.value = 'Choisissez au moins un enfant.')
   const manquant = REQUIS[type.value]?.find(([cle]) => !d[cle])
@@ -229,10 +235,22 @@ async function enregistrer() {
         <div class="champ">
           <span>1. Que voulez-vous noter ?</span>
           <div class="types">
-            <button v-for="t in typesDisponibles" :key="t" type="button" class="type" :class="{ actif: type === t }" @click="choisirType(t)">
+            <button
+              v-for="t in TYPES_SAISIE"
+              :key="t"
+              type="button"
+              class="type"
+              :class="{ actif: type === t, verrouille: t === 'PHOTO' && photosVerrouillees }"
+              :title="t === 'PHOTO' && photosVerrouillees ? 'Fonctionnalité Pro — touchez pour en savoir plus' : undefined"
+              @click="choisirType(t)"
+            >
               <IconeEntree :type="t" :taille="30" />
               {{ TYPES[t] }}
+              <span v-if="t === 'PHOTO' && photosVerrouillees" class="badge-pro">Pro</span>
             </button>
+          </div>
+          <div v-if="avisPro || (type === 'PHOTO' && photosVerrouillees)" class="avis-pro">
+            Le partage de photos est une fonctionnalité <strong>Pro</strong>. Contactez-nous pour l'activer pour votre garderie.
           </div>
         </div>
 
@@ -463,6 +481,27 @@ async function enregistrer() {
   border-color: var(--c-primaire);
   background: var(--c-primaire-clair);
   color: var(--c-primaire-fonce);
+}
+.type.verrouille {
+  position: relative;
+  opacity: 0.55;
+  border-style: dashed;
+}
+.type.verrouille .badge-pro {
+  top: -7px;
+  right: -4px;
+  font-size: 0.62rem;
+  padding: 0.15rem 0.45rem;
+}
+.avis-pro {
+  margin-top: 0.65rem;
+  padding: 0.7rem 0.9rem;
+  border-radius: 12px;
+  background: #fdf3e3;
+  border: 1px solid #f0d9ae;
+  color: #8a5a14;
+  font-size: 0.9rem;
+  font-weight: 600;
 }
 .par-enfant {
   border: 1.5px solid var(--c-bord);

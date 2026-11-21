@@ -48,8 +48,9 @@ async function supprimer(p: Photo) {
         <h1>Photos</h1>
         <span class="doux">Les photos ne sont visibles que par les parents des enfants identifiés.</span>
       </div>
-      <button v-if="auth.aFonctionnalite('photos')" class="btn" :disabled="!enfants.length" @click="formulaire = true">
+      <button class="btn btn-pro" :disabled="!enfants.length" @click="formulaire = true">
         + Partager des photos
+        <span v-if="!auth.aFonctionnalite('photos')" class="badge-pro">Pro</span>
       </button>
     </div>
 
@@ -70,8 +71,9 @@ async function supprimer(p: Photo) {
       <h2>Photos récentes</h2>
       <div v-if="page && !page.photos.length" class="vide">
         <p>Aucune photo pour l'instant.</p>
-        <button v-if="auth.aFonctionnalite('photos')" class="btn" :disabled="!enfants.length" @click="formulaire = true">
+        <button class="btn btn-pro" :disabled="!enfants.length" @click="formulaire = true">
           Partager les premières photos
+          <span v-if="!auth.aFonctionnalite('photos')" class="badge-pro">Pro</span>
         </button>
       </div>
       <GaleriePhotos v-if="page" :photos="page.photos" :supprimable="(p) => auth.estAdmin || p.auteurId === auth.moi?.id" @supprimer="supprimer" />
