@@ -63,6 +63,9 @@ async function supprimer(p: Photo) {
         <button class="btn" :disabled="!enfants.length" @click="formulaire = true">Partager les premières photos</button>
       </div>
       <GaleriePhotos v-if="page" :photos="page.photos" :supprimable="(p) => auth.estAdmin || p.auteurId === auth.moi?.id" @supprimer="supprimer" />
+      <div v-else class="grille" aria-busy="true">
+        <div v-for="i in 6" :key="i" class="squelette" style="aspect-ratio: 1; border-radius: 14px" />
+      </div>
       <div v-if="page && page.pages > 1" class="rangee" style="justify-content: center; margin-top: 1rem">
         <button class="btn secondaire petit" :disabled="page.page <= 1" @click="chargerPhotos(page.page - 1)">‹ Précédentes</button>
         <span class="doux petit">Page {{ page.page }} / {{ page.pages }}</span>

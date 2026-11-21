@@ -304,7 +304,10 @@ function entreeEnregistree(msg: string) {
   </div>
   <div v-else class="conteneur">
     <div v-if="erreur" class="alerte erreur">{{ erreur }}</div>
-    <p v-else class="doux">Chargement…</p>
+    <div v-else class="pile" aria-busy="true">
+      <div class="squelette hero" />
+      <div class="grille"><div v-for="i in 3" :key="i" class="squelette carte" /></div>
+    </div>
   </div>
 </template>
 

@@ -58,6 +58,11 @@ async function connecter() {
 .auth {
   padding: 2rem;
 }
+@media (max-width: 500px) {
+  .auth {
+    padding: 1.4rem 1.1rem;
+  }
+}
 .tete {
   display: flex;
   flex-direction: column;

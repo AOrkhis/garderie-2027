@@ -62,7 +62,9 @@ watch([groupeId, statut], charger)
     </div>
 
     <div v-if="erreur" class="alerte erreur">{{ erreur }}</div>
-    <p v-if="chargement" class="doux">Chargement…</p>
+    <div v-if="chargement" class="grille" aria-busy="true">
+      <div v-for="i in 6" :key="i" class="squelette carte" />
+    </div>
     <div v-else-if="!filtres.length" class="vide carte">Aucun enfant trouvé.</div>
 
     <div class="grille">

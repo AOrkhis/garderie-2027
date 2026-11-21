@@ -33,6 +33,9 @@ onMounted(async () => {
     </div>
     <div v-if="erreur" class="alerte erreur">{{ erreur }}</div>
     <div v-if="enfants && !enfants.length" class="vide carte">Aucun enfant n'est encore associé à votre compte.</div>
+    <div v-if="enfants === null" class="grille" aria-busy="true">
+      <div v-for="i in 3" :key="i" class="squelette carte" />
+    </div>
 
     <div class="grille">
       <RouterLink v-for="e in enfants" :key="e.id" :to="`/parent/enfants/${e.id}`" class="carte enfant">

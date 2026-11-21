@@ -198,6 +198,9 @@ const ouvrir = (type: TypeEntree | undefined, ids: number[]) => (formulaire.valu
       <RouterLink to="/garderie/enfants/nouveau" class="btn">Inscrire un enfant</RouterLink>
     </div>
     <div v-else-if="vue && !visibles.length" class="vide">Aucun enfant ne correspond à ce filtre.</div>
+    <div v-else-if="!vue" class="grille" aria-busy="true">
+      <div v-for="i in 6" :key="i" class="squelette carte" />
+    </div>
 
     <div class="grille">
       <article

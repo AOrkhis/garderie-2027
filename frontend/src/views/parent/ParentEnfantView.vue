@@ -51,6 +51,10 @@ watch(onglet, (o) => o === 'photos' && !photos.value && chargerPhotos())
   <div class="conteneur" style="max-width: 820px">
     <RouterLink to="/parent" class="btn lien petit" style="padding-left: 0">‹ Mes enfants</RouterLink>
     <div v-if="erreur" class="alerte erreur">{{ erreur }}</div>
+    <div v-if="!enfant && !erreur" class="pile" aria-busy="true">
+      <div class="squelette hero" />
+      <div class="squelette carte" />
+    </div>
 
     <template v-if="enfant">
       <header class="hero">

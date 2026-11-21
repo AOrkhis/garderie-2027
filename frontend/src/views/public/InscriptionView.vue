@@ -29,7 +29,7 @@ async function inscrire() {
 
 <template>
   <div class="conteneur" style="max-width: 640px">
-    <div class="carte" style="padding: 2rem">
+    <div class="carte auth">
       <h1>Créer ma garderie</h1>
       <p class="doux">Quelques informations pour démarrer. Vous pourrez tout modifier plus tard.</p>
       <form @submit.prevent="inscrire">
@@ -64,6 +64,14 @@ async function inscrire() {
 </template>
 
 <style scoped>
+.auth {
+  padding: 2rem;
+}
+@media (max-width: 500px) {
+  .auth {
+    padding: 1.4rem 1.1rem;
+  }
+}
 .section {
   color: var(--c-primaire-fonce);
   border-top: 1px solid var(--c-bord);

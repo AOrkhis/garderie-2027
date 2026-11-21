@@ -466,3 +466,72 @@ input[type='time'] {
     padding: 0.5rem 0.85rem 0.6rem;
   }
 }
+
+/* ---------- Accessibilité ---------- */
+:focus-visible {
+  outline: 3px solid rgb(106 79 216 / 0.55);
+  outline-offset: 2px;
+  border-radius: 8px;
+}
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+}
+
+/* ---------- Squelettes de chargement ---------- */
+.squelette {
+  border-radius: var(--rayon);
+  background: linear-gradient(90deg, #ebe8f6 25%, #f7f5fd 50%, #ebe8f6 75%);
+  background-size: 400% 100%;
+  animation: brille 1.3s ease infinite;
+}
+@keyframes brille {
+  0% {
+    background-position: 100% 0;
+  }
+  100% {
+    background-position: 0 0;
+  }
+}
+.squelette.carte {
+  height: 148px;
+}
+.squelette.ligne {
+  height: 18px;
+  border-radius: 8px;
+}
+.squelette.hero {
+  height: 150px;
+}
+
+/* Longs courriels/noms : peuvent se couper plutôt que déborder */
+.tableau td,
+.carteligne,
+.nom,
+.qui {
+  overflow-wrap: anywhere;
+  min-width: 0;
+}
+
+@media (max-width: 699px) {
+  /* Onglets en « sélecteur segmenté » : parts égales sur téléphone */
+  .onglets button {
+    flex: 1;
+    padding: 0.55rem 0.4rem;
+  }
+  .tableau th,
+  .tableau td {
+    padding: 0.55rem 0.4rem;
+  }
+  /* Bouton d'action principal de l'en-tête en pleine largeur */
+  .entete-page > .btn,
+  .entete-page > a.btn {
+    width: 100%;
+  }
+}
