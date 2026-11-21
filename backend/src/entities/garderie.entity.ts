@@ -5,7 +5,7 @@ import {
   PrimaryGeneratedColumn,
   UpdateDateColumn,
 } from 'typeorm';
-import { StatutGarderie } from '../common/enums';
+import { PlanGarderie, StatutGarderie } from '../common/enums';
 
 @Entity('garderies')
 export class Garderie {
@@ -42,6 +42,13 @@ export class Garderie {
     default: StatutGarderie.ACTIVE,
   })
   statut: StatutGarderie;
+
+  @Column({ type: 'enum', enum: PlanGarderie, default: PlanGarderie.GRATUIT })
+  plan: PlanGarderie;
+
+  /** Fin de la période d'essai Pro (null = pas d'essai en cours). */
+  @Column({ type: 'datetime', nullable: true })
+  essaiJusquau: Date | null;
 
   @CreateDateColumn()
   creeLe: Date;

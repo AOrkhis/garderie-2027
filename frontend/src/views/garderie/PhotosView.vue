@@ -48,7 +48,17 @@ async function supprimer(p: Photo) {
         <h1>Photos</h1>
         <span class="doux">Les photos ne sont visibles que par les parents des enfants identifiés.</span>
       </div>
-      <button class="btn" :disabled="!enfants.length" @click="formulaire = true">+ Partager des photos</button>
+      <button v-if="auth.aFonctionnalite('photos')" class="btn" :disabled="!enfants.length" @click="formulaire = true">
+        + Partager des photos
+      </button>
+    </div>
+
+    <div v-if="!auth.aFonctionnalite('photos')" class="alerte avert">
+      <div>
+        <strong>Forfait Gratuit</strong> — le partage de nouvelles photos nécessite le forfait Pro. Les photos déjà publiées
+        restent visibles.
+        <RouterLink to="/garderie/parametres">Voir votre forfait</RouterLink>
+      </div>
     </div>
 
     <div v-if="enfants.some((e) => !e.consentementPhoto)" class="alerte avert petit">
@@ -60,7 +70,9 @@ async function supprimer(p: Photo) {
       <h2>Photos récentes</h2>
       <div v-if="page && !page.photos.length" class="vide">
         <p>Aucune photo pour l'instant.</p>
-        <button class="btn" :disabled="!enfants.length" @click="formulaire = true">Partager les premières photos</button>
+        <button v-if="auth.aFonctionnalite('photos')" class="btn" :disabled="!enfants.length" @click="formulaire = true">
+          Partager les premières photos
+        </button>
       </div>
       <GaleriePhotos v-if="page" :photos="page.photos" :supprimable="(p) => auth.estAdmin || p.auteurId === auth.moi?.id" @supprimer="supprimer" />
       <div v-else class="grille" aria-busy="true">

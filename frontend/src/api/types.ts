@@ -17,10 +17,20 @@ export interface Jetons {
   refreshToken: string
 }
 
+export type PlanGarderie = 'GRATUIT' | 'PRO'
+
 export interface Adhesion {
   id: number
   role: Role
-  garderie: { id: number; nom: string; statut: string; fuseauHoraire: string }
+  garderie: {
+    id: number
+    nom: string
+    statut: string
+    fuseauHoraire: string
+    plan: PlanGarderie
+    planEffectif: PlanGarderie
+    essaiJusquau: string | null
+  }
 }
 
 export interface Moi {
@@ -45,6 +55,10 @@ export interface Garderie {
   heuresOuverture: string | null
   fuseauHoraire: string
   statut: 'ACTIVE' | 'SUSPENDUE'
+  plan: PlanGarderie
+  planEffectif: PlanGarderie
+  essaiJusquau: string | null
+  fonctionnalites: string[]
   creeLe: string
 }
 

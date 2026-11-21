@@ -15,6 +15,13 @@ export const useAuthStore = defineStore('auth', () => {
   const adhesionCourante = computed(() =>
     moi.value?.adhesions.find((a) => a.id === moi.value?.adhesionCourante),
   )
+  const planEffectif = computed(() => adhesionCourante.value?.garderie.planEffectif ?? 'GRATUIT')
+  const enEssai = computed(() => {
+    const e = adhesionCourante.value?.garderie.essaiJusquau
+    return !!e && new Date(e).getTime() > Date.now()
+  })
+  const aFonctionnalite = (f: string) =>
+    f === 'photos' ? planEffectif.value === 'PRO' : true
 
   const accueil = computed(() => {
     if (estParent.value) return '/parent'
@@ -71,6 +78,9 @@ export const useAuthStore = defineStore('auth', () => {
     estAdmin,
     estParent,
     adhesionCourante,
+    planEffectif,
+    enEssai,
+    aFonctionnalite,
     accueil,
     chargerMoi,
     ouvrirSession,

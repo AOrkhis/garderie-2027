@@ -20,7 +20,8 @@ SaaS pour garderies (tout en français). Spécifications : `CAHIER_DES_CHARGES.m
 - Données d'une entrée de journal validées par type dans `backend/src/journal/schemas.ts`.
 - Sans `SMTP_HOST`, les courriels (invitations, réinitialisation) sont affichés dans la console du backend, et les routes d'invitation renvoient `lienInvitation` (affiché dans l'interface avec un bouton « Copier »).
 - Frontend : messages de succès/erreur via `useNotificationsStore()` (`succes`, `erreur`, `info`, avec action « Annuler » possible) et confirmations via `notif.confirmer({...})` — ne pas utiliser `window.confirm`.
-- Super admins : courriels listés dans `SUPER_ADMIN_COURRIELS` (appliqué au démarrage).
+- Super admins : courriels listés dans `SUPER_ADMIN_COURRIELS` (appliqué au démarrage) ; page `/admin/garderies` (suspendre, plan, essai).
+- Forfaits : `garderies.plan` (GRATUIT|PRO) + `essaiJusquau` (essai Pro 30 j à l'inscription). Matrice dans `common/fonctionnalites.ts` ; `planEffectif` = PRO si essai en cours. Le backend rejette les actions payantes (ex. `POST /photos` → 402 `FONCTIONNALITE_PAYANTE`) ; la consultation des données reste gratuite.
 - Courriels : `BREVO_API_KEY` (API HTTPS, port 443) prime sur le SMTP — nécessaire en prod car Railway bloque les ports 465/587 sortants. SMTP Brevo (`smtp-relay.brevo.com:587`) suffit en local.
 - Photos : binaires stockés en BD (`photos.contenu`/`vignette`, LONGBLOB, `select:false`) — le disque Railway est éphémère. `UPLOAD_DIR` ne sert plus qu'en repli pour les anciennes photos disque locales.
 

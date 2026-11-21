@@ -1,6 +1,8 @@
 import {
   BadRequestException,
   ForbiddenException,
+  HttpException,
+  HttpStatus,
   Injectable,
   NotFoundException,
 } from '@nestjs/common';
@@ -15,6 +17,7 @@ import { In, Repository } from 'typeorm';
 import { AuditService } from '../common/audit.service';
 import { UtilisateurConnecte } from '../common/auth.decorators';
 import { dateDuJour } from '../common/dates';
+import { aFonctionnalite } from '../common/fonctionnalites';
 import { Role, StatutEnfant } from '../common/enums';
 import { EnfantsService } from '../enfants/enfants.service';
 import { Enfant, Garderie, Photo } from '../entities';
@@ -88,6 +91,16 @@ export class PhotosService {
     const garderie = await this.garderies.findOneByOrFail({
       id: user.garderieId!,
     });
+    if (!aFonctionnalite(garderie, 'photos'))
+      throw new HttpException(
+        {
+          code: 'FONCTIONNALITE_PAYANTE',
+          fonctionnalite: 'photos',
+          message:
+            'La publication de photos nécessite le forfait Pro. Contactez-nous pour passer au forfait Pro.',
+        },
+        HttpStatus.PAYMENT_REQUIRED,
+      );
 
     const creees: Photo[] = [];
     for (const f of fichiers) {

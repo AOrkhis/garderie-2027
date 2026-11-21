@@ -9,6 +9,11 @@ export enum StatutGarderie {
   SUSPENDUE = 'SUSPENDUE',
 }
 
+export enum PlanGarderie {
+  GRATUIT = 'GRATUIT',
+  PRO = 'PRO',
+}
+
 export enum StatutEnfant {
   ACTIF = 'ACTIF',
   ARCHIVE = 'ARCHIVE',

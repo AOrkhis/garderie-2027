@@ -56,6 +56,15 @@ function deconnexion() {
     <template v-if="auth.connecte">
       <span class="espace" />
       <span class="garderie-nom doux petit">{{ auth.adhesionCourante?.garderie.nom }}</span>
+      <RouterLink
+        v-if="auth.moi?.estSuperAdmin"
+        to="/admin/garderies"
+        class="bouton-icone plateforme"
+        title="Plateforme"
+        aria-label="Plateforme"
+      >
+        <IconeNav nom="plateforme" :taille="20" />
+      </RouterLink>
       <RouterLink to="/profil" class="avatar-mini" aria-label="Mon profil">{{ initiales(auth.moi!) }}</RouterLink>
       <button class="bouton-icone" aria-label="Déconnexion" @click="deconnexion"><IconeNav nom="deconnexion" :taille="20" /></button>
     </template>
@@ -92,6 +101,10 @@ function deconnexion() {
         <span>{{ l.libelle }}</span>
       </RouterLink>
       <RouterLink v-if="auth.estParent" to="/profil"><IconeNav nom="profil" :taille="22" /><span>Profil</span></RouterLink>
+      <RouterLink v-if="auth.moi?.estSuperAdmin && (auth.estPersonnel || auth.estParent)" to="/admin/garderies" class="lien-plateforme">
+        <IconeNav nom="plateforme" :taille="22" />
+        <span>Plateforme</span>
+      </RouterLink>
     </div>
 
     <div class="pied-rail">
@@ -188,6 +201,18 @@ function deconnexion() {
 .bouton-icone:hover {
   background: var(--c-danger-clair);
   color: var(--c-danger);
+}
+.bouton-icone.plateforme {
+  color: var(--c-primaire);
+}
+.bouton-icone.plateforme:hover,
+.bouton-icone.plateforme.router-link-active {
+  background: var(--c-primaire-clair);
+  color: var(--c-primaire-fonce);
+}
+.lien-plateforme {
+  margin-top: 0.5rem;
+  border-top: 1px solid var(--c-bord);
 }
 
 /* ---------- Barre latérale ---------- */

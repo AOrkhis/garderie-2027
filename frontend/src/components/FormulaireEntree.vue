@@ -12,6 +12,7 @@ import {
   QUANTITES,
   TYPES,
 } from '@/utils/format'
+import { useAuthStore } from '@/stores/auth'
 import ChampHeure from './ChampHeure.vue'
 import FenetreModale from './FenetreModale.vue'
 import IconeEntree from './IconeEntree.vue'
@@ -32,7 +33,11 @@ const props = defineProps<{
 }>()
 const emit = defineEmits<{ fermer: []; enregistre: [message: string, ids: number[]] }>()
 
+const auth = useAuthStore()
 const TYPES_SAISIE: TypeEntree[] = ['ARRIVEE', 'DEPART', 'REPAS', 'SIESTE', 'ACTIVITE', 'HYGIENE', 'HUMEUR', 'REMARQUE', 'PHOTO']
+const typesDisponibles = computed(() =>
+  TYPES_SAISIE.filter((t) => t !== 'PHOTO' || auth.aFonctionnalite('photos')),
+)
 const REQUIS: Partial<Record<TypeEntree, [string, string][]>> = {
   REPAS: [['moment', 'le moment du repas']],
   SIESTE: [['debut', "l'heure de début de la sieste"]],
@@ -81,7 +86,9 @@ const erreur = ref('')
 const envoi = ref(false)
 const menusRecents = ref<string[]>(JSON.parse(localStorage.getItem(CLE_MENUS) ?? '[]'))
 
-const accepteFichiers = computed(() => type.value === 'ACTIVITE' || type.value === 'PHOTO')
+const accepteFichiers = computed(
+  () => auth.aFonctionnalite('photos') && (type.value === 'ACTIVITE' || type.value === 'PHOTO'),
+)
 const enfantsChoisis = computed(() => props.enfants.filter((e) => choisis.value.includes(e.id)))
 const sansConsentement = computed(() => enfantsChoisis.value.filter((e) => !e.consentementPhoto))
 const repasParEnfant = computed(() => !props.entree && type.value === 'REPAS' && choisis.value.length > 1)
@@ -222,7 +229,7 @@ async function enregistrer() {
         <div class="champ">
           <span>1. Que voulez-vous noter ?</span>
           <div class="types">
-            <button v-for="t in TYPES_SAISIE" :key="t" type="button" class="type" :class="{ actif: type === t }" @click="choisirType(t)">
+            <button v-for="t in typesDisponibles" :key="t" type="button" class="type" :class="{ actif: type === t }" @click="choisirType(t)">
               <IconeEntree :type="t" :taille="30" />
               {{ TYPES[t] }}
             </button>

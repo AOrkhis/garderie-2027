@@ -10,6 +10,7 @@ import { ageEnMois, groupePourAge } from '../common/age';
 import { AuditService } from '../common/audit.service';
 import { dateDuJour } from '../common/dates';
 import { UtilisateurConnecte } from '../common/auth.decorators';
+import { fonctionnalitesDe, planEffectif } from '../common/fonctionnalites';
 import { Role, ROLES_PERSONNEL, StatutEnfant } from '../common/enums';
 import { InvitationsService } from '../auth/invitations.service';
 import {
@@ -43,8 +44,13 @@ export class GarderieService {
     @InjectRepository(Enfant) private readonly enfants: Repository<Enfant>,
   ) {}
 
-  obtenir(user: UtilisateurConnecte) {
-    return this.garderies.findOneByOrFail({ id: user.garderieId! });
+  async obtenir(user: UtilisateurConnecte) {
+    const g = await this.garderies.findOneByOrFail({ id: user.garderieId! });
+    return {
+      ...g,
+      planEffectif: planEffectif(g),
+      fonctionnalites: fonctionnalitesDe(g),
+    };
   }
 
   async modifier(user: UtilisateurConnecte, dto: ModifierGarderieDto) {

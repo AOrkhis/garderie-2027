@@ -1,4 +1,5 @@
 import {
+  BadRequestException,
   Body,
   Controller,
   Get,
@@ -8,7 +9,7 @@ import {
   Patch,
 } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { IsEnum } from 'class-validator';
+import { IsDateString, IsEnum, IsOptional } from 'class-validator';
 import { Repository } from 'typeorm';
 import { AuditService } from '../common/audit.service';
 import {
@@ -16,11 +17,19 @@ import {
   Utilisateur,
   UtilisateurConnecte,
 } from '../common/auth.decorators';
-import { Role, StatutEnfant, StatutGarderie } from '../common/enums';
+import { planEffectif } from '../common/fonctionnalites';
+import {
+  PlanGarderie,
+  Role,
+  StatutEnfant,
+  StatutGarderie,
+} from '../common/enums';
 import { Adhesion, Enfant, EntreeJournal, Garderie, Photo } from '../entities';
 
-class StatutGarderieDto {
-  @IsEnum(StatutGarderie) statut: StatutGarderie;
+class ModifierGarderieAdminDto {
+  @IsOptional() @IsEnum(StatutGarderie) statut?: StatutGarderie;
+  @IsOptional() @IsEnum(PlanGarderie) plan?: PlanGarderie;
+  @IsOptional() @IsDateString() essaiJusquau?: string | null;
 }
 
 async function compter(
@@ -71,6 +80,7 @@ export class SuperAdminController {
       ]);
     return garderies.map((g) => ({
       ...g,
+      planEffectif: planEffectif(g),
       statistiques: {
         enfants: enfants.get(g.id) ?? 0,
         personnel: personnel.get(g.id) ?? 0,
@@ -82,17 +92,32 @@ export class SuperAdminController {
   }
 
   @Patch('garderies/:id')
-  async changerStatut(
+  async modifier(
     @Utilisateur() user: UtilisateurConnecte,
     @Param('id', ParseIntPipe) id: number,
-    @Body() dto: StatutGarderieDto,
+    @Body() dto: ModifierGarderieAdminDto,
   ) {
-    const res = await this.garderies.update({ id }, { statut: dto.statut });
+    const champs: Partial<Garderie> = {};
+    if (dto.statut) champs.statut = dto.statut;
+    if (dto.plan) champs.plan = dto.plan;
+    if (dto.essaiJusquau !== undefined)
+      champs.essaiJusquau = dto.essaiJusquau
+        ? new Date(dto.essaiJusquau)
+        : null;
+    if (!Object.keys(champs).length)
+      throw new BadRequestException('Aucune modification fournie.');
+    const res = await this.garderies.update({ id }, champs);
     if (!res.affected) throw new NotFoundException('Garderie introuvable.');
+    const details = Object.entries(champs)
+      .map(([k, v]) => `${k}=${v instanceof Date ? v.toISOString() : v}`)
+      .join(', ');
     await this.audit.consigner(
       { utilisateurId: user.utilisateurId, garderieId: id },
-      `garderie.${dto.statut.toLowerCase()}`,
+      'admin.garderie_modifiee',
+      `garderie:${id}`,
+      { champs: details },
     );
-    return this.garderies.findOneByOrFail({ id });
+    const g = await this.garderies.findOneByOrFail({ id });
+    return { ...g, planEffectif: planEffectif(g) };
   }
 }

@@ -14,6 +14,7 @@ import { randomBytes } from 'crypto';
 import { DataSource, In, MoreThan, Repository } from 'typeorm';
 import { AuditService } from '../common/audit.service';
 import { UtilisateurConnecte } from '../common/auth.decorators';
+import { planEffectif } from '../common/fonctionnalites';
 import { Role, StatutGarderie } from '../common/enums';
 import { genererJeton, hacherJeton } from '../common/jetons';
 import { MailService } from '../common/mail.service';
@@ -125,6 +126,7 @@ export class AuthService implements OnModuleInit {
           adresse: dto.adresse ?? null,
           telephone: dto.telephone ?? null,
           courriel: dto.courriel,
+          essaiJusquau: new Date(Date.now() + 30 * 24 * 3600 * 1000),
         }),
       );
       const user = await m.save(
@@ -153,7 +155,7 @@ export class AuthService implements OnModuleInit {
     await this.mail.envoyer(
       user.courriel,
       'Bienvenue sur Garderie 2027',
-      `Bonjour ${user.prenom},\n\nVotre garderie « ${dto.nomGarderie} » a bien été créée. Vous pouvez maintenant inviter votre personnel et inscrire les enfants.`,
+      `Bonjour ${user.prenom},\n\nVotre garderie « ${dto.nomGarderie} » a bien été créée. Vous pouvez maintenant inviter votre personnel et inscrire les enfants.\n\nVotre essai Pro de 30 jours est activé : le partage de photos est inclus.`,
       `${this.mail.frontendUrl}/connexion`,
     );
     return this.emettreJetons(user, adhesion.id);
@@ -270,6 +272,9 @@ export class AuthService implements OnModuleInit {
           nom: a.garderie.nom,
           statut: a.garderie.statut,
           fuseauHoraire: a.garderie.fuseauHoraire,
+          plan: a.garderie.plan,
+          planEffectif: planEffectif(a.garderie),
+          essaiJusquau: a.garderie.essaiJusquau,
         },
       })),
     };

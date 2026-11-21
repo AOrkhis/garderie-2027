@@ -5,6 +5,7 @@ import type { Garderie } from '@/api/types'
 import { useAuthStore } from '@/stores/auth'
 
 const auth = useAuthStore()
+const garderie = ref<Garderie | null>(null)
 const f = reactive({ nom: '', adresse: '', telephone: '', courriel: '', heuresOuverture: '', fuseauHoraire: 'America/Toronto' })
 const FUSEAUX = ['America/Toronto', 'America/Montreal', 'America/Halifax', 'America/Moncton', 'America/Winnipeg', 'America/Edmonton', 'America/Vancouver', 'Europe/Paris', 'Europe/Brussels', 'Europe/Zurich', 'Africa/Casablanca', 'Africa/Dakar', 'Africa/Abidjan', 'Africa/Tunis', 'Africa/Algiers']
 const message = ref('')
@@ -12,6 +13,7 @@ const erreur = ref('')
 
 onMounted(async () => {
   const g = await api<Garderie>('/garderie')
+  garderie.value = g
   Object.assign(f, {
     nom: g.nom,
     adresse: g.adresse ?? '',
@@ -37,6 +39,24 @@ async function enregistrer() {
 <template>
   <div class="conteneur" style="max-width: 680px">
     <h1>Paramètres de la garderie</h1>
+
+    <div v-if="garderie" class="carte forfait">
+      <div class="rangee" style="margin-bottom: 0.4rem">
+        <h2 style="margin: 0">Forfait</h2>
+        <span class="espace" />
+        <span class="badge" :class="garderie.planEffectif === 'PRO' ? 'vert' : ''">{{ garderie.planEffectif === 'PRO' ? 'Pro' : 'Gratuit' }}</span>
+      </div>
+      <p v-if="garderie.essaiJusquau && new Date(garderie.essaiJusquau).getTime() > Date.now()" class="petit doux" style="margin: 0">
+        Essai Pro jusqu'au {{ new Date(garderie.essaiJusquau).toLocaleDateString('fr-CA', { day: 'numeric', month: 'long', year: 'numeric' }) }}
+        — partage de photos inclus.
+      </p>
+      <p v-else-if="garderie.planEffectif === 'PRO'" class="petit doux" style="margin: 0">Partage de photos inclus.</p>
+      <p v-else class="petit doux" style="margin: 0">
+        Le journal (repas, siestes, activités…) est inclus. Le partage de photos avec les parents nécessite le forfait Pro —
+        contactez-nous pour l'activer.
+      </p>
+    </div>
+
     <form class="carte" @submit.prevent="enregistrer">
       <label class="champ"><span>Nom</span><input v-model="f.nom" required maxlength="150" /></label>
       <label class="champ"><span>Adresse</span><input v-model="f.adresse" maxlength="255" /></label>
