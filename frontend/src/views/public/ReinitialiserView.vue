@@ -31,7 +31,7 @@ async function enregistrer() {
 
 <template>
   <div class="conteneur etroit">
-    <div class="carte" style="padding: 2rem">
+    <div class="carte auth">
       <h1>Nouveau mot de passe</h1>
       <form @submit.prevent="enregistrer">
         <label class="champ">
@@ -43,6 +43,18 @@ async function enregistrer() {
         <div v-if="erreur" class="alerte erreur">{{ erreur }}</div>
         <button class="btn bloc" :disabled="envoi">Enregistrer</button>
       </form>
+      <p class="centre petit" style="margin-top: 1rem"><RouterLink to="/connexion">Retour à la connexion</RouterLink></p>
     </div>
   </div>
 </template>
+
+<style scoped>
+.auth {
+  padding: 2rem;
+}
+@media (max-width: 500px) {
+  .auth {
+    padding: 1.4rem 1.1rem;
+  }
+}
+</style>

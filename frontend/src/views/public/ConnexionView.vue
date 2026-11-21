@@ -29,6 +29,7 @@ async function connecter() {
 
 <template>
   <div class="conteneur etroit">
+    <RouterLink to="/" class="btn lien petit" style="padding-left: 0">‹ Accueil</RouterLink>
     <div class="carte auth">
       <div class="tete">
         <LogoMarque :taille="52" />

@@ -29,6 +29,7 @@ async function inscrire() {
 
 <template>
   <div class="conteneur" style="max-width: 640px">
+    <RouterLink to="/" class="btn lien petit" style="padding-left: 0">‹ Accueil</RouterLink>
     <div class="carte auth">
       <h1>Créer ma garderie</h1>
       <p class="doux">Quelques informations pour démarrer. Vous pourrez tout modifier plus tard.</p>

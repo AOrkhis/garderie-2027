@@ -24,7 +24,7 @@ async function envoyer() {
 
 <template>
   <div class="conteneur etroit">
-    <div class="carte" style="padding: 2rem">
+    <div class="carte auth">
       <h1>Mot de passe oublié</h1>
       <div v-if="message" class="alerte">{{ message }}</div>
       <form v-else @submit.prevent="envoyer">
@@ -37,3 +37,14 @@ async function envoyer() {
     </div>
   </div>
 </template>
+
+<style scoped>
+.auth {
+  padding: 2rem;
+}
+@media (max-width: 500px) {
+  .auth {
+    padding: 1.4rem 1.1rem;
+  }
+}
+</style>
