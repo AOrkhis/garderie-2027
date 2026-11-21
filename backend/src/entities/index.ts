@@ -9,3 +9,5 @@ export * from './journal-audit.entity';
 export * from './parent-enfant.entity';
 export * from './photo.entity';
 export * from './utilisateur.entity';
+export * from './forfait.entity';
+export * from './parametres-plateforme.entity';

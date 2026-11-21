@@ -1,8 +1,8 @@
 <script setup lang="ts">
-import { onMounted, ref } from 'vue'
+import { computed } from 'vue'
 import { RouterLink } from 'vue-router'
-import { api } from '@/api/client'
 import type { Forfait } from '@/api/types'
+import { useForfaitsStore } from '@/stores/forfaits'
 import { formaterPrix } from '@/utils/format'
 import IconeEntree from '@/components/IconeEntree.vue'
 import LogoMarque from '@/components/LogoMarque.vue'
@@ -17,10 +17,29 @@ const atouts: { type: TypeEntree; titre: string; texte: string }[] = [
   { type: 'PHOTO', titre: 'Photos privées', texte: 'Visibles uniquement par les parents des enfants identifiés.' },
 ]
 
-const forfaits = ref<Forfait[]>([])
-onMounted(async () => {
-  forfaits.value = await api<Forfait[]>('/forfaits').catch(() => [])
-})
+const grille = useForfaitsStore()
+grille.charger()
+const forfaits = computed(() => grille.forfaits)
+const essai = computed(() =>
+  grille.parametres?.forfaitEssai && grille.parametres.dureeEssaiJours
+    ? { nom: grille.parametres.forfaitEssai.nom, jours: grille.parametres.dureeEssaiJours }
+    : null,
+)
+
+/** « ou 790 $ / an — 2 mois offerts » calculé à partir des prix. */
+function texteAnnuel(fo: Forfait) {
+  if (fo.prixAnnuel) {
+    const offerts = fo.prixMensuel ? Math.round(12 - fo.prixAnnuel / fo.prixMensuel) : 0
+    return `ou ${formaterPrix(fo.prixAnnuel)} / an${offerts > 0 ? ` — ${offerts} mois offert${offerts > 1 ? 's' : ''}` : ''}`
+  }
+  if (fo.prixAPartirDe) return 'Tarif adapté à votre installation'
+  return fo.prixMensuel === 0 ? 'Pour toujours' : ''
+}
+function libelleBouton(fo: Forfait) {
+  if (fo.libelleBouton) return fo.libelleBouton
+  if (essai.value && fo.prixMensuel > 0) return `Essayer ${essai.value.jours} jours`
+  return 'Commencer'
+}
 
 const lignes = [
   { nom: 'Emma L.', couleur: '#4f46e5', arrivee: '8 h 05', repas: 'TOUT', sieste: 'Dort · 12 h 40', change: '2×' },
@@ -67,7 +86,9 @@ const QUANT: [string, string][] = [
             <RouterLink to="/inscription" class="btn grand">Créer ma garderie</RouterLink>
             <RouterLink to="/connexion" class="btn secondaire grand">Se connecter</RouterLink>
           </div>
-          <p class="mention">30 jours de Pro offerts · Sans carte de crédit · Entièrement en français</p>
+          <p class="mention">
+            <template v-if="essai">{{ essai.jours }} jours de {{ essai.nom }} offerts · </template>Sans carte de crédit · Entièrement en français
+          </p>
         </div>
 
         <!-- Aperçu du produit -->
@@ -156,28 +177,26 @@ const QUANT: [string, string][] = [
       <div class="titre-section">
         <span class="eyebrow">Forfaits</span>
         <h2>Commencez gratuitement</h2>
-        <p class="doux">Chaque nouvelle garderie profite du forfait Pro pendant 30 jours, sans carte de crédit.</p>
+        <p v-if="essai" class="doux">
+          Chaque nouvelle garderie profite du forfait {{ essai.nom }} pendant {{ essai.jours }} jours, sans carte de crédit.
+        </p>
       </div>
       <div class="forfaits">
-        <div v-for="fo in forfaits" :key="fo.plan" class="forfait" :class="{ vedette: fo.plan === 'PRO' }">
-          <span v-if="fo.plan === 'PRO'" class="etiquette-vedette">Le plus populaire</span>
+        <div v-for="fo in forfaits" :key="fo.code" class="forfait" :class="{ vedette: fo.vedette }">
+          <span v-if="fo.vedette && fo.etiquetteVedette" class="etiquette-vedette">{{ fo.etiquetteVedette }}</span>
           <h3>{{ fo.nom }}</h3>
           <p class="prix">
             <small v-if="fo.prixAPartirDe">dès </small>{{ formaterPrix(fo.prixMensuel) }} <small>/ mois</small>
           </p>
-          <p class="annuel">
-            {{ fo.prixAnnuel ? `ou ${formaterPrix(fo.prixAnnuel)} / an — 2 mois offerts` : fo.prixAPartirDe ? 'Contrat annuel personnalisé' : 'Pour toujours' }}
-          </p>
+          <p class="annuel">{{ texteAnnuel(fo) }}</p>
           <p class="doux desc">{{ fo.description }}</p>
           <ul>
             <li v-for="pt in fo.points" :key="pt">{{ pt }}</li>
           </ul>
-          <RouterLink to="/inscription" class="btn bloc" :class="{ secondaire: fo.plan !== 'PRO' }">
-            {{ fo.plan === 'SUR_MESURE' ? 'Nous contacter' : fo.plan === 'GRATUIT' ? 'Commencer' : 'Essayer 30 jours' }}
-          </RouterLink>
+          <RouterLink to="/inscription" class="btn bloc" :class="{ secondaire: !fo.vedette }">{{ libelleBouton(fo) }}</RouterLink>
         </div>
       </div>
-      <p class="doux petit taxes">Prix en dollars canadiens, avant TPS et TVQ.</p>
+      <p v-if="grille.parametres?.mentionTaxes" class="doux petit taxes">{{ grille.parametres.mentionTaxes }}</p>
     </section>
 
     <!-- Appel final -->
@@ -576,7 +595,7 @@ const QUANT: [string, string][] = [
 /* ---------- Forfaits ---------- */
 .forfaits {
   display: grid;
-  grid-template-columns: repeat(4, minmax(0, 1fr));
+  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
   gap: 1rem;
   align-items: stretch;
 }

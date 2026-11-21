@@ -1,40 +1,25 @@
 import { HttpException, HttpStatus } from '@nestjs/common';
-import { PlanGarderie } from './enums';
-import type { Garderie } from '../entities';
+import type { Forfait, Garderie, ParametresPlateforme } from '../entities';
 
-/** Fonctionnalités payantes — le journal (repas, siestes, etc.) reste gratuit. */
+/**
+ * Fonctionnalités payantes : chacune correspond à du code qui la contrôle
+ * (ex. `photos` → téléversement). Les forfaits qui les incluent sont gérés en base.
+ */
 export type Fonctionnalite = 'photos';
 
-/** Registre affiché dans la console super admin (cases à cocher). */
 export const FONCTIONNALITES: { cle: Fonctionnalite; libelle: string }[] = [
   { cle: 'photos', libelle: 'Partage de photos' },
 ];
+export const CLES_FONCTIONNALITES = FONCTIONNALITES.map((f) => f.cle);
 
-export interface Forfait {
-  plan: PlanGarderie;
-  nom: string;
-  description: string;
-  /** Prix en dollars canadiens, avant taxes (TPS + TVQ). */
-  prixMensuel: number;
-  prixAnnuel: number | null;
-  /** « À partir de » : prix de base d'un forfait négocié. */
-  prixAPartirDe: boolean;
-  /** null = illimité (ou fixé au cas par cas pour le forfait sur mesure). */
-  maxEnfants: number | null;
-  maxPersonnel: number | null;
-  fonctionnalites: Fonctionnalite[];
-  points: string[];
-}
-
-/** Source unique des forfaits : prix, limites et fonctionnalités. */
-export const FORFAITS: Record<PlanGarderie, Forfait> = {
-  [PlanGarderie.GRATUIT]: {
-    plan: PlanGarderie.GRATUIT,
+/** Forfaits créés au premier démarrage — ensuite modifiables par le super admin. */
+export const FORFAITS_INITIAUX: Partial<Forfait>[] = [
+  {
+    code: 'GRATUIT',
     nom: 'Gratuit',
     description: 'Pour essayer le journal avec un petit groupe.',
     prixMensuel: 0,
     prixAnnuel: null,
-    prixAPartirDe: false,
     maxEnfants: 5,
     maxPersonnel: 2,
     fonctionnalites: [],
@@ -44,14 +29,15 @@ export const FORFAITS: Record<PlanGarderie, Forfait> = {
       'Présences, repas, siestes, changes, humeurs',
       'Parents illimités',
     ],
+    ordre: 0,
+    libelleBouton: 'Commencer',
   },
-  [PlanGarderie.FAMILIAL]: {
-    plan: PlanGarderie.FAMILIAL,
+  {
+    code: 'FAMILIAL',
     nom: 'Familial',
     description: 'Pour les services de garde en milieu familial (RSG).',
     prixMensuel: 19,
     prixAnnuel: 190,
-    prixAPartirDe: false,
     maxEnfants: 9,
     maxPersonnel: 3,
     fonctionnalites: ['photos'],
@@ -61,14 +47,14 @@ export const FORFAITS: Record<PlanGarderie, Forfait> = {
       'Tout le journal',
       'Partage de photos privées',
     ],
+    ordre: 1,
   },
-  [PlanGarderie.PRO]: {
-    plan: PlanGarderie.PRO,
+  {
+    code: 'PRO',
     nom: 'Pro',
     description: 'Pour les garderies et les installations.',
     prixMensuel: 79,
     prixAnnuel: 790,
-    prixAPartirDe: false,
     maxEnfants: 50,
     maxPersonnel: null,
     fonctionnalites: ['photos'],
@@ -78,9 +64,12 @@ export const FORFAITS: Record<PlanGarderie, Forfait> = {
       'Partage de photos privées',
       'Soutien prioritaire par courriel',
     ],
+    ordre: 2,
+    vedette: true,
+    etiquetteVedette: 'Le plus populaire',
   },
-  [PlanGarderie.SUR_MESURE]: {
-    plan: PlanGarderie.SUR_MESURE,
+  {
+    code: 'SUR_MESURE',
     nom: 'Sur mesure',
     description: 'Grandes installations et réseaux de garderies.',
     prixMensuel: 149,
@@ -95,16 +84,38 @@ export const FORFAITS: Record<PlanGarderie, Forfait> = {
       'Personnel illimité',
       'Accompagnement et soutien téléphonique',
     ],
+    ordre: 3,
+    libelleBouton: 'Nous contacter',
   },
+];
+
+export const PARAMETRES_INITIAUX: Partial<ParametresPlateforme> = {
+  id: 1,
+  forfaitDefaut: 'GRATUIT',
+  forfaitEssai: 'PRO',
+  dureeEssaiJours: 30,
+  mentionTaxes: 'Prix en dollars canadiens, avant TPS et TVQ.',
 };
 
-/** Ordre d'affichage. */
-export const ORDRE_FORFAITS = [
-  PlanGarderie.GRATUIT,
-  PlanGarderie.FAMILIAL,
-  PlanGarderie.PRO,
-  PlanGarderie.SUR_MESURE,
-];
+// ---------- Cache mémoire (rechargé par ForfaitsService à chaque modification) ----------
+
+let forfaits = new Map<string, Forfait>();
+let parametres: ParametresPlateforme | null = null;
+
+export function definirCacheForfaits(
+  liste: Forfait[],
+  p: ParametresPlateforme | null,
+) {
+  forfaits = new Map(liste.map((f) => [f.code, f]));
+  parametres = p;
+}
+export const forfaitsEnCache = () =>
+  [...forfaits.values()].sort((a, b) => a.ordre - b.ordre);
+export const parametresEnCache = () => parametres;
+export const forfait = (code: string | null | undefined) =>
+  code ? forfaits.get(code) : undefined;
+export const nomForfait = (code: string | null | undefined) =>
+  forfait(code)?.nom ?? code ?? '—';
 
 type GarderiePlan = Pick<Garderie, 'plan' | 'essaiJusquau'> & {
   fonctionnalitesExtra?: string[] | null;
@@ -115,26 +126,25 @@ type GarderiePlan = Pick<Garderie, 'plan' | 'essaiJusquau'> & {
 export const essaiActif = (g: GarderiePlan) =>
   !!g.essaiJusquau && new Date(g.essaiJusquau).getTime() > Date.now();
 
-/** Pendant l'essai, une garderie Gratuit ou Familial profite du forfait Pro. */
-export function planEffectif(g: GarderiePlan): PlanGarderie {
-  if (
-    essaiActif(g) &&
-    (g.plan === PlanGarderie.GRATUIT || g.plan === PlanGarderie.FAMILIAL)
-  )
-    return PlanGarderie.PRO;
+/** Pendant l'essai, la garderie profite du forfait d'essai s'il est supérieur au sien. */
+export function planEffectif(g: GarderiePlan): string {
+  const essai = forfait(parametres?.forfaitEssai);
+  const base = forfait(g.plan);
+  if (essai && essaiActif(g) && (!base || essai.ordre > base.ordre))
+    return essai.code;
   return g.plan;
 }
 
 /** Fonctionnalités du plan + celles accordées individuellement. */
 export function fonctionnalitesDe(g: GarderiePlan): Fonctionnalite[] {
-  const base = new Set(FORFAITS[planEffectif(g)].fonctionnalites);
+  const base = new Set(fonctionnalitesDuPlan(g));
   for (const f of g.fonctionnalitesExtra ?? []) base.add(f as Fonctionnalite);
   return [...base];
 }
 
 /** Celles incluses par le plan seul (sans les extras — ne peuvent pas être retirées). */
 export function fonctionnalitesDuPlan(g: GarderiePlan): Fonctionnalite[] {
-  return FORFAITS[planEffectif(g)].fonctionnalites;
+  return (forfait(planEffectif(g))?.fonctionnalites ?? []) as Fonctionnalite[];
 }
 
 export function aFonctionnalite(g: GarderiePlan, f: Fonctionnalite): boolean {
@@ -143,12 +153,30 @@ export function aFonctionnalite(g: GarderiePlan, f: Fonctionnalite): boolean {
 
 /** Limites effectives : la valeur fixée par le super admin l'emporte sur le forfait. */
 export function limitesDe(g: GarderiePlan) {
-  const f = FORFAITS[planEffectif(g)];
+  const f = forfait(planEffectif(g));
   return {
-    maxEnfants: g.maxEnfantsPerso ?? f.maxEnfants,
-    maxPersonnel: g.maxPersonnelPerso ?? f.maxPersonnel,
+    maxEnfants: g.maxEnfantsPerso ?? f?.maxEnfants ?? null,
+    maxPersonnel: g.maxPersonnelPerso ?? f?.maxPersonnel ?? null,
   };
 }
+
+/** Tout ce que l'interface doit savoir du forfait d'une garderie. */
+export function resumeForfait(g: GarderiePlan) {
+  const effectif = planEffectif(g);
+  return {
+    planNom: nomForfait(g.plan),
+    planEffectif: effectif,
+    planEffectifNom: nomForfait(effectif),
+    fonctionnalites: fonctionnalitesDe(g),
+    limites: limitesDe(g),
+  };
+}
+
+/** Noms des forfaits publics qui incluent une fonctionnalité (« Familial, Pro »). */
+export const forfaitsAvec = (f: Fonctionnalite) =>
+  forfaitsEnCache()
+    .filter((x) => x.public && x.fonctionnalites.includes(f))
+    .map((x) => x.nom);
 
 /** Lève une 402 si l'ajout dépasse la limite du forfait. */
 export function verifierLimite(
@@ -159,7 +187,7 @@ export function verifierLimite(
   const { maxEnfants, maxPersonnel } = limitesDe(g);
   const max = type === 'enfants' ? maxEnfants : maxPersonnel;
   if (max === null || utilises < max) return;
-  const nom = FORFAITS[planEffectif(g)].nom;
+  const nom = nomForfait(planEffectif(g));
   throw new HttpException(
     {
       statusCode: HttpStatus.PAYMENT_REQUIRED,

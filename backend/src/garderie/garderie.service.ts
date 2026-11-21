@@ -10,12 +10,7 @@ import { ageEnMois, groupePourAge } from '../common/age';
 import { AuditService } from '../common/audit.service';
 import { dateDuJour } from '../common/dates';
 import { UtilisateurConnecte } from '../common/auth.decorators';
-import {
-  fonctionnalitesDe,
-  limitesDe,
-  planEffectif,
-  verifierLimite,
-} from '../common/fonctionnalites';
+import { resumeForfait, verifierLimite } from '../common/fonctionnalites';
 import { Role, ROLES_PERSONNEL, StatutEnfant } from '../common/enums';
 import { InvitationsService } from '../auth/invitations.service';
 import {
@@ -57,9 +52,7 @@ export class GarderieService {
     ]);
     return {
       ...g,
-      planEffectif: planEffectif(g),
-      fonctionnalites: fonctionnalitesDe(g),
-      limites: limitesDe(g),
+      ...resumeForfait(g),
       utilisation: { enfants, personnel },
     };
   }

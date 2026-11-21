@@ -17,7 +17,8 @@ export interface Jetons {
   refreshToken: string
 }
 
-export type PlanGarderie = 'GRATUIT' | 'FAMILIAL' | 'PRO' | 'SUR_MESURE'
+/** Code d'un forfait (table `forfaits`, géré par le super admin). */
+export type PlanGarderie = string
 
 /** null = illimité */
 export interface Limites {
@@ -26,7 +27,8 @@ export interface Limites {
 }
 
 export interface Forfait {
-  plan: PlanGarderie
+  id: number
+  code: PlanGarderie
   nom: string
   description: string
   prixMensuel: number
@@ -36,6 +38,28 @@ export interface Forfait {
   maxPersonnel: number | null
   fonctionnalites: string[]
   points: string[]
+  ordre: number
+  public: boolean
+  vedette: boolean
+  etiquetteVedette: string | null
+  libelleBouton: string | null
+}
+
+export interface GrilleForfaits {
+  forfaits: Forfait[]
+  parametres: { dureeEssaiJours: number; forfaitEssai: { code: string; nom: string } | null; mentionTaxes: string }
+}
+
+export interface ParametresPlateforme {
+  forfaitDefaut: string
+  forfaitEssai: string | null
+  dureeEssaiJours: number
+  mentionTaxes: string
+}
+
+export interface AdminForfaits {
+  forfaits: (Forfait & { garderies: number })[]
+  parametres: ParametresPlateforme
 }
 
 export interface Adhesion {
@@ -47,7 +71,9 @@ export interface Adhesion {
     statut: string
     fuseauHoraire: string
     plan: PlanGarderie
+    planNom: string
     planEffectif: PlanGarderie
+    planEffectifNom: string
     fonctionnalites: string[]
     limites: Limites
     essaiJusquau: string | null
@@ -77,7 +103,9 @@ export interface Garderie {
   fuseauHoraire: string
   statut: 'ACTIVE' | 'SUSPENDUE'
   plan: PlanGarderie
+  planNom: string
   planEffectif: PlanGarderie
+  planEffectifNom: string
   essaiJusquau: string | null
   fonctionnalites: string[]
   limites: Limites

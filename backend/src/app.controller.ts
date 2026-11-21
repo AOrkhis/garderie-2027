@@ -1,11 +1,14 @@
 import { Controller, Get } from '@nestjs/common';
 import { AppService } from './app.service';
 import { Public } from './common/auth.decorators';
-import { FORFAITS, ORDRE_FORFAITS } from './common/fonctionnalites';
+import { ForfaitsService } from './common/forfaits.service';
 
 @Controller()
 export class AppController {
-  constructor(private readonly appService: AppService) {}
+  constructor(
+    private readonly appService: AppService,
+    private readonly forfaitsService: ForfaitsService,
+  ) {}
 
   @Public()
   @Get()
@@ -17,6 +20,6 @@ export class AppController {
   @Public()
   @Get('forfaits')
   forfaits() {
-    return ORDRE_FORFAITS.map((p) => FORFAITS[p]);
+    return this.forfaitsService.public();
   }
 }

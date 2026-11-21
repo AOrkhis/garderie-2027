@@ -19,6 +19,7 @@ import {
   Min,
   IsOptional,
   IsString,
+  MaxLength,
 } from 'class-validator';
 import { Repository } from 'typeorm';
 import { AuditService } from '../common/audit.service';
@@ -32,22 +33,17 @@ import {
   Fonctionnalite,
   fonctionnalitesDe,
   fonctionnalitesDuPlan,
-  limitesDe,
-  planEffectif,
+  forfait,
+  resumeForfait,
 } from '../common/fonctionnalites';
-import {
-  PlanGarderie,
-  Role,
-  StatutEnfant,
-  StatutGarderie,
-} from '../common/enums';
+import { Role, StatutEnfant, StatutGarderie } from '../common/enums';
 import { Adhesion, Enfant, EntreeJournal, Garderie, Photo } from '../entities';
 
 const CLES_FONCTIONNALITES = FONCTIONNALITES.map((f) => f.cle);
 
 class ModifierGarderieAdminDto {
   @IsOptional() @IsEnum(StatutGarderie) statut?: StatutGarderie;
-  @IsOptional() @IsEnum(PlanGarderie) plan?: PlanGarderie;
+  @IsOptional() @IsString() @MaxLength(40) plan?: string;
   @IsOptional() @IsDateString() essaiJusquau?: string | null;
   @IsOptional()
   @IsArray()
@@ -126,10 +122,9 @@ export class SuperAdminController {
     }
     return garderies.map((g) => ({
       ...g,
-      planEffectif: planEffectif(g),
+      ...resumeForfait(g),
       fonctionnalitesPlan: fonctionnalitesDuPlan(g),
       fonctionnalitesEffectives: fonctionnalitesDe(g),
-      limites: limitesDe(g),
       admins: admins.get(g.id) ?? [],
       statistiques: {
         enfants: enfants.get(g.id) ?? 0,
@@ -149,7 +144,11 @@ export class SuperAdminController {
   ) {
     const champs: Partial<Garderie> = {};
     if (dto.statut) champs.statut = dto.statut;
-    if (dto.plan) champs.plan = dto.plan;
+    if (dto.plan) {
+      if (!forfait(dto.plan))
+        throw new BadRequestException(`Forfait inconnu : ${dto.plan}.`);
+      champs.plan = dto.plan;
+    }
     if (dto.essaiJusquau !== undefined)
       champs.essaiJusquau = dto.essaiJusquau
         ? new Date(dto.essaiJusquau)
@@ -178,10 +177,9 @@ export class SuperAdminController {
     const g = await this.garderies.findOneByOrFail({ id });
     return {
       ...g,
-      planEffectif: planEffectif(g),
+      ...resumeForfait(g),
       fonctionnalitesPlan: fonctionnalitesDuPlan(g),
       fonctionnalitesEffectives: fonctionnalitesDe(g),
-      limites: limitesDe(g),
     };
   }
 }

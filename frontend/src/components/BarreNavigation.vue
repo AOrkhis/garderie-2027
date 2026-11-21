@@ -24,7 +24,11 @@ const liens = computed(() => {
         : []),
     ]
   if (auth.estParent) return [{ a: '/parent', libelle: 'Mes enfants', icone: 'accueil' }]
-  if (auth.moi?.estSuperAdmin) return [{ a: '/admin/garderies', libelle: 'Plateforme', icone: 'plateforme' }]
+  if (auth.moi?.estSuperAdmin)
+    return [
+      { a: '/admin/garderies', libelle: 'Garderies', icone: 'plateforme' },
+      { a: '/admin/forfaits', libelle: 'Forfaits', icone: 'parametres' },
+    ]
   return []
 })
 

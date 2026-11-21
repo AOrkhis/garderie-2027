@@ -15,9 +15,9 @@ import { DataSource, In, MoreThan, Repository } from 'typeorm';
 import { AuditService } from '../common/audit.service';
 import { UtilisateurConnecte } from '../common/auth.decorators';
 import {
-  fonctionnalitesDe,
-  limitesDe,
-  planEffectif,
+  forfait,
+  parametresEnCache,
+  resumeForfait,
 } from '../common/fonctionnalites';
 import { Role, StatutGarderie } from '../common/enums';
 import { genererJeton, hacherJeton } from '../common/jetons';
@@ -122,6 +122,11 @@ export class AuthService implements OnModuleInit {
         'Un compte existe déjà avec ce courriel. Connectez-vous pour continuer.',
       );
 
+    const reglages = parametresEnCache();
+    const essai =
+      reglages?.dureeEssaiJours && forfait(reglages.forfaitEssai)
+        ? forfait(reglages.forfaitEssai)!
+        : null;
     const { user, adhesion } = await this.dataSource.transaction(async (m) => {
       const garderie = await m.save(
         m.create(Garderie, {
@@ -130,7 +135,12 @@ export class AuthService implements OnModuleInit {
           adresse: dto.adresse ?? null,
           telephone: dto.telephone ?? null,
           courriel: dto.courriel,
-          essaiJusquau: new Date(Date.now() + 30 * 24 * 3600 * 1000),
+          plan: reglages?.forfaitDefaut ?? 'GRATUIT',
+          essaiJusquau: essai
+            ? new Date(
+                Date.now() + reglages!.dureeEssaiJours * 24 * 3600 * 1000,
+              )
+            : null,
         }),
       );
       const user = await m.save(
@@ -159,7 +169,7 @@ export class AuthService implements OnModuleInit {
     await this.mail.envoyer(
       user.courriel,
       'Bienvenue sur Garderie 2027',
-      `Bonjour ${user.prenom},\n\nVotre garderie « ${dto.nomGarderie} » a bien été créée. Vous pouvez maintenant inviter votre personnel et inscrire les enfants.\n\nVotre essai Pro de 30 jours est activé : le partage de photos est inclus.`,
+      `Bonjour ${user.prenom},\n\nVotre garderie « ${dto.nomGarderie} » a bien été créée. Vous pouvez maintenant inviter votre personnel et inscrire les enfants.${essai ? `\n\nVotre essai ${essai.nom} de ${reglages!.dureeEssaiJours} jours est activé.` : ''}`,
       `${this.mail.frontendUrl}/connexion`,
     );
     return this.emettreJetons(user, adhesion.id);
@@ -277,9 +287,7 @@ export class AuthService implements OnModuleInit {
           statut: a.garderie.statut,
           fuseauHoraire: a.garderie.fuseauHoraire,
           plan: a.garderie.plan,
-          planEffectif: planEffectif(a.garderie),
-          fonctionnalites: fonctionnalitesDe(a.garderie),
-          limites: limitesDe(a.garderie),
+          ...resumeForfait(a.garderie),
           essaiJusquau: a.garderie.essaiJusquau,
         },
       })),

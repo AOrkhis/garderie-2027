@@ -1,6 +1,7 @@
 import { Module } from '@nestjs/common';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { Adhesion, Enfant, EntreeJournal, Garderie, Photo } from '../entities';
+import { ForfaitsController } from './forfaits.controller';
 import { SuperAdminController } from './super-admin.controller';
 
 @Module({
@@ -13,6 +14,6 @@ import { SuperAdminController } from './super-admin.controller';
       Photo,
     ]),
   ],
-  controllers: [SuperAdminController],
+  controllers: [SuperAdminController, ForfaitsController],
 })
 export class SuperAdminModule {}

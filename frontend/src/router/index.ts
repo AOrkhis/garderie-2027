@@ -40,6 +40,7 @@ const router = createRouter({
 
     { path: '/profil', component: () => import('@/views/ProfilView.vue'), meta: { titre: 'Mon profil' } },
     { path: '/admin/garderies', component: () => import('@/views/admin/AdminGarderiesView.vue'), meta: { superAdmin: true, titre: 'Garderies' } },
+    { path: '/admin/forfaits', component: () => import('@/views/admin/AdminForfaitsView.vue'), meta: { superAdmin: true, titre: 'Forfaits et prix' } },
     { path: '/:pathMatch(.*)*', component: () => import('@/views/IntrouvableView.vue'), meta: { public: true, titre: 'Page introuvable' } },
   ],
   scrollBehavior: () => ({ top: 0 }),

@@ -1,9 +1,10 @@
 <script setup lang="ts">
 import { computed, onMounted, ref } from 'vue'
 import { api } from '@/api/client'
-import type { GarderieAdmin, PlanGarderie } from '@/api/types'
+import type { AdminForfaits, GarderieAdmin, PlanGarderie } from '@/api/types'
+import OngletsAdmin from '@/components/OngletsAdmin.vue'
 import { useNotificationsStore } from '@/stores/notifications'
-import { formaterDate, PLANS } from '@/utils/format'
+import { formaterDate } from '@/utils/format'
 
 interface Fonctionnalite {
   cle: string
@@ -15,11 +16,16 @@ const garderies = ref<GarderieAdmin[]>([])
 const catalogue = ref<Fonctionnalite[]>([])
 const erreur = ref('')
 const ouvertes = ref<Set<number>>(new Set())
+const offre = ref<AdminForfaits | null>(null)
+const dureeEssai = computed(() => offre.value?.parametres.dureeEssaiJours || 30)
+const nomForfait = (code: string) => offre.value?.forfaits.find((f) => f.code === code)?.nom ?? code
+const estPayant = (code: string) => (offre.value?.forfaits.find((f) => f.code === code)?.prixMensuel ?? 0) > 0
 
 async function charger() {
-  ;[garderies.value, catalogue.value] = await Promise.all([
+  ;[garderies.value, catalogue.value, offre.value] = await Promise.all([
     api<GarderieAdmin[]>('/admin/garderies').catch((e) => ((erreur.value = e.message), [])),
     api<Fonctionnalite[]>('/admin/fonctionnalites').catch(() => []),
+    api<AdminForfaits>('/admin/forfaits').catch(() => null),
   ])
 }
 onMounted(charger)
@@ -29,7 +35,7 @@ const enEssai = (g: GarderieAdmin) => !!g.essaiJusquau && new Date(g.essaiJusqua
 const totaux = computed(() => ({
   total: garderies.value.length,
   actives: garderies.value.filter((g) => g.statut === 'ACTIVE').length,
-  payants: garderies.value.filter((g) => g.plan !== 'GRATUIT').length,
+  payants: garderies.value.filter((g) => estPayant(g.plan)).length,
   essais: garderies.value.filter(enEssai).length,
 }))
 
@@ -47,7 +53,7 @@ async function modifier(g: GarderieAdmin, champs: Record<string, unknown>, messa
 
 async function changerPlan(g: GarderieAdmin, e: Event) {
   const plan = (e.target as HTMLSelectElement).value as PlanGarderie
-  await modifier(g, { plan }, `« ${g.nom} » passe au forfait ${PLANS[plan]}.`)
+  await modifier(g, { plan }, `« ${g.nom} » passe au forfait ${nomForfait(plan)}.`)
 }
 
 /** Champ vide = revenir à la limite du forfait. */
@@ -66,7 +72,7 @@ const plein = (n: number, max: number | null) => max !== null && n >= max
 
 function prolongerEssai(g: GarderieAdmin) {
   const base = enEssai(g) ? new Date(g.essaiJusquau!).getTime() : Date.now()
-  modifier(g, { essaiJusquau: new Date(base + 30 * 24 * 3600 * 1000).toISOString() }, `Essai de « ${g.nom} » prolongé de 30 jours.`)
+  modifier(g, { essaiJusquau: new Date(base + dureeEssai.value * 24 * 3600 * 1000).toISOString() }, `Essai de « ${g.nom} » prolongé de ${dureeEssai.value} jours.`)
 }
 
 async function basculerStatut(g: GarderieAdmin) {
@@ -100,6 +106,7 @@ async function basculerFonctionnalite(g: GarderieAdmin, cle: string) {
 <template>
   <div class="conteneur">
     <h1>Garderies de la plateforme</h1>
+    <OngletsAdmin />
     <div v-if="erreur" class="alerte erreur">{{ erreur }}</div>
 
     <div v-if="garderies.length" class="resume">
@@ -123,11 +130,12 @@ async function basculerFonctionnalite(g: GarderieAdmin, cle: string) {
               <td class="petit">{{ formaterDate(g.creeLe) }}</td>
               <td>
                 <select class="choix-plan" :value="g.plan" @change="changerPlan(g, $event)">
-                  <option v-for="(l, k) in PLANS" :key="k" :value="k">{{ l }}</option>
+                  <option v-for="f in offre?.forfaits ?? []" :key="f.code" :value="f.code">{{ f.nom }}</option>
+                  <option v-if="!offre?.forfaits.some((f) => f.code === g.plan)" :value="g.plan">{{ g.planNom }}</option>
                 </select>
                 <div class="petit" style="margin-top: 0.25rem">
                   <span v-if="enEssai(g)" class="badge orange">Essai jusqu'au {{ formaterDate(g.essaiJusquau!) }}</span>
-                  <button class="btn lien petit" style="padding: 0; min-height: 0" @click="prolongerEssai(g)">+30 j d'essai</button>
+                  <button class="btn lien petit" style="padding: 0; min-height: 0" @click="prolongerEssai(g)">+{{ dureeEssai }} j d'essai</button>
                 </div>
               </td>
               <td :class="{ depasse: plein(g.statistiques.enfants, g.limites.maxEnfants) }">
@@ -158,7 +166,7 @@ async function basculerFonctionnalite(g: GarderieAdmin, cle: string) {
                         @change="basculerFonctionnalite(g, f.cle)"
                       />
                       {{ f.libelle }}
-                      <small v-if="g.fonctionnalitesPlan.includes(f.cle)" class="doux">— inclus dans {{ PLANS[g.planEffectif] }}</small>
+                      <small v-if="g.fonctionnalitesPlan.includes(f.cle)" class="doux">— inclus dans {{ g.planEffectifNom }}</small>
                       <small v-else-if="(g.fonctionnalitesExtra ?? []).includes(f.cle)" class="badge vert">accordé</small>
                     </label>
                     <p v-if="!catalogue.length" class="doux petit">Aucune fonctionnalité payante pour l'instant.</p>

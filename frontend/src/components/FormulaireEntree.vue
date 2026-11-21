@@ -13,6 +13,7 @@ import {
   TYPES,
 } from '@/utils/format'
 import { useAuthStore } from '@/stores/auth'
+import { useForfaitsStore } from '@/stores/forfaits'
 import ChampHeure from './ChampHeure.vue'
 import FenetreModale from './FenetreModale.vue'
 import IconeEntree from './IconeEntree.vue'
@@ -35,6 +36,8 @@ const emit = defineEmits<{ fermer: []; enregistre: [message: string, ids: number
 
 const auth = useAuthStore()
 const TYPES_SAISIE: TypeEntree[] = ['ARRIVEE', 'DEPART', 'REPAS', 'SIESTE', 'ACTIVITE', 'HYGIENE', 'HUMEUR', 'REMARQUE', 'PHOTO']
+const forfaitsStore = useForfaitsStore()
+const forfaitPhotos = computed(() => forfaitsStore.pour('photos')?.nom ?? 'payant')
 const photosVerrouillees = computed(() => !auth.aFonctionnalite('photos'))
 const avisPro = ref(false)
 const REQUIS: Partial<Record<TypeEntree, [string, string][]>> = {
@@ -158,7 +161,7 @@ const libelleEnfants = () =>
 async function enregistrer() {
   erreur.value = ''
   if (type.value === 'PHOTO' && photosVerrouillees.value)
-    return (erreur.value = 'Le partage de photos nécessite le forfait Pro.')
+    return (erreur.value = `Le partage de photos nécessite le forfait ${forfaitPhotos.value}.`)
   if (!heure.value) return (erreur.value = "Choisissez l'heure.")
   if (!choisis.value.length) return (erreur.value = 'Choisissez au moins un enfant.')
   const manquant = REQUIS[type.value]?.find(([cle]) => !d[cle])
@@ -241,16 +244,16 @@ async function enregistrer() {
               type="button"
               class="type"
               :class="{ actif: type === t, verrouille: t === 'PHOTO' && photosVerrouillees }"
-              :title="t === 'PHOTO' && photosVerrouillees ? 'Fonctionnalité Pro — touchez pour en savoir plus' : undefined"
+              :title="t === 'PHOTO' && photosVerrouillees ? `Inclus dès le forfait ${forfaitPhotos} — touchez pour en savoir plus` : undefined"
               @click="choisirType(t)"
             >
               <IconeEntree :type="t" :taille="30" />
               {{ TYPES[t] }}
-              <span v-if="t === 'PHOTO' && photosVerrouillees" class="badge-pro">Pro</span>
+              <span v-if="t === 'PHOTO' && photosVerrouillees" class="badge-pro">{{ forfaitPhotos }}</span>
             </button>
           </div>
           <div v-if="avisPro || (type === 'PHOTO' && photosVerrouillees)" class="avis-pro">
-            Le partage de photos est une fonctionnalité <strong>Pro</strong>. Contactez-nous pour l'activer pour votre garderie.
+            Le partage de photos est inclus dès le forfait <strong>{{ forfaitPhotos }}</strong>. Contactez-nous pour l'activer pour votre garderie.
           </div>
         </div>
 

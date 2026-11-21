@@ -10,10 +10,12 @@ import IconeEntree from '@/components/IconeEntree.vue'
 import ListeDemarrage from '@/components/ListeDemarrage.vue'
 import NavigationDate from '@/components/NavigationDate.vue'
 import { useAuthStore } from '@/stores/auth'
+import { useForfaitsStore } from '@/stores/forfaits'
 import { useNotificationsStore } from '@/stores/notifications'
 import { decrireEntree, formaterDateLongue, formaterDuree, formaterHeure, PRESENCES, TYPES } from '@/utils/format'
 
 const auth = useAuthStore()
+const forfaitsStore = useForfaitsStore()
 const notif = useNotificationsStore()
 const groupes = ref<Groupe[]>([])
 const groupeId = ref<number | null>(Number(localStorage.getItem('garderie2027.groupe')) || null)
@@ -294,10 +296,10 @@ const ouvrir = (type: TypeEntree | undefined, ids: number[]) => (formulaire.valu
             <button class="btn secondaire petit" @click="ouvrir('ACTIVITE', selection)">Activité</button>
             <button
               class="btn secondaire petit btn-pro"
-              :title="!auth.aFonctionnalite('photos') ? 'Fonctionnalité Pro' : undefined"
+              :title="!auth.aFonctionnalite('photos') ? `Inclus dès le forfait ${forfaitsStore.pour('photos')?.nom ?? 'payant'}` : undefined"
               @click="ouvrir('PHOTO', selection)"
             >
-              Photo<span v-if="!auth.aFonctionnalite('photos')" class="badge-pro">Pro</span>
+              Photo<span v-if="!auth.aFonctionnalite('photos')" class="badge-pro">{{ forfaitsStore.pour('photos')?.nom ?? 'Payant' }}</span>
             </button>
             <button class="btn secondaire petit" @click="ouvrir('REMARQUE', selection)">Remarque</button>
             <button class="btn secondaire petit" @click="ouvrir(undefined, selection)">Autre…</button>

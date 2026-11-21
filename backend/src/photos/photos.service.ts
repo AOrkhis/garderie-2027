@@ -17,7 +17,7 @@ import { In, Repository } from 'typeorm';
 import { AuditService } from '../common/audit.service';
 import { UtilisateurConnecte } from '../common/auth.decorators';
 import { dateDuJour } from '../common/dates';
-import { aFonctionnalite } from '../common/fonctionnalites';
+import { aFonctionnalite, forfaitsAvec } from '../common/fonctionnalites';
 import { Role, StatutEnfant } from '../common/enums';
 import { EnfantsService } from '../enfants/enfants.service';
 import { Enfant, Garderie, Photo } from '../entities';
@@ -96,8 +96,7 @@ export class PhotosService {
         {
           code: 'FONCTIONNALITE_PAYANTE',
           fonctionnalite: 'photos',
-          message:
-            'La publication de photos nécessite le forfait Familial, Pro ou Sur mesure. Contactez-nous pour changer de forfait.',
+          message: `La publication de photos n'est pas incluse dans votre forfait${forfaitsAvec('photos').length ? ` (offerte avec : ${forfaitsAvec('photos').join(', ')})` : ''}. Contactez-nous pour changer de forfait.`,
         },
         HttpStatus.PAYMENT_REQUIRED,
       );

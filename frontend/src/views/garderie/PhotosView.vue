@@ -5,9 +5,11 @@ import type { Enfant, PagePhotos, Photo } from '@/api/types'
 import FormulaireEntree from '@/components/FormulaireEntree.vue'
 import GaleriePhotos from '@/components/GaleriePhotos.vue'
 import { useAuthStore } from '@/stores/auth'
+import { useForfaitsStore } from '@/stores/forfaits'
 import { useNotificationsStore } from '@/stores/notifications'
 
 const auth = useAuthStore()
+const forfaitsStore = useForfaitsStore()
 const notif = useNotificationsStore()
 const enfants = ref<Enfant[]>([])
 const page = ref<PagePhotos | null>(null)
@@ -50,14 +52,14 @@ async function supprimer(p: Photo) {
       </div>
       <button class="btn btn-pro" :disabled="!enfants.length" @click="formulaire = true">
         + Partager des photos
-        <span v-if="!auth.aFonctionnalite('photos')" class="badge-pro">Pro</span>
+        <span v-if="!auth.aFonctionnalite('photos')" class="badge-pro">{{ forfaitsStore.pour('photos')?.nom ?? 'Payant' }}</span>
       </button>
     </div>
 
     <div v-if="!auth.aFonctionnalite('photos')" class="alerte avert">
       <div>
-        <strong>Forfait Gratuit</strong> — le partage de nouvelles photos nécessite le forfait Pro. Les photos déjà publiées
-        restent visibles.
+        <strong>Forfait {{ auth.adhesionCourante?.garderie.planEffectifNom }}</strong> — le partage de nouvelles photos est inclus avec
+        {{ forfaitsStore.nomsAvec('photos').join(', ') || 'un forfait payant' }}. Les photos déjà publiées restent visibles.
         <RouterLink to="/garderie/parametres">Voir votre forfait</RouterLink>
       </div>
     </div>
@@ -73,7 +75,7 @@ async function supprimer(p: Photo) {
         <p>Aucune photo pour l'instant.</p>
         <button class="btn btn-pro" :disabled="!enfants.length" @click="formulaire = true">
           Partager les premières photos
-          <span v-if="!auth.aFonctionnalite('photos')" class="badge-pro">Pro</span>
+          <span v-if="!auth.aFonctionnalite('photos')" class="badge-pro">{{ forfaitsStore.pour('photos')?.nom ?? 'Payant' }}</span>
         </button>
       </div>
       <GaleriePhotos v-if="page" :photos="page.photos" :supprimable="(p) => auth.estAdmin || p.auteurId === auth.moi?.id" @supprimer="supprimer" />

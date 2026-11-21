@@ -4,7 +4,7 @@ import { RouterLink } from 'vue-router'
 import { api } from '@/api/client'
 import type { Enfant, Garderie, Groupe } from '@/api/types'
 import AvatarEnfant from '@/components/AvatarEnfant.vue'
-import { age, PLANS } from '@/utils/format'
+import { age } from '@/utils/format'
 
 const enfants = ref<Enfant[]>([])
 const groupes = ref<Groupe[]>([])
@@ -57,11 +57,11 @@ watch([groupeId, statut], charger)
     </div>
 
     <div v-if="complet" class="alerte erreur">
-      <strong>Limite atteinte :</strong> {{ actifs }} / {{ limite }} enfants actifs pour le forfait {{ PLANS[garderie!.planEffectif] }}.
+      <strong>Limite atteinte :</strong> {{ actifs }} / {{ limite }} enfants actifs pour le forfait {{ garderie!.planEffectifNom }}.
       Archivez un enfant parti ou <RouterLink to="/garderie/parametres">changez de forfait</RouterLink>.
     </div>
     <div v-else-if="presqueComplet" class="alerte avert">
-      {{ actifs }} / {{ limite }} enfants actifs — vous approchez de la limite du forfait {{ PLANS[garderie!.planEffectif] }}.
+      {{ actifs }} / {{ limite }} enfants actifs — vous approchez de la limite du forfait {{ garderie!.planEffectifNom }}.
       <RouterLink to="/garderie/parametres">Voir les forfaits</RouterLink>
     </div>
 

@@ -1,25 +1,26 @@
 <script setup lang="ts">
 import { computed, onMounted, reactive, ref } from 'vue'
 import { api } from '@/api/client'
-import type { Forfait, Garderie } from '@/api/types'
+import type { Garderie } from '@/api/types'
 import JaugeUtilisation from '@/components/JaugeUtilisation.vue'
 import { useAuthStore } from '@/stores/auth'
-import { formaterDate, formaterPrix, PLANS } from '@/utils/format'
+import { useForfaitsStore } from '@/stores/forfaits'
+import { formaterDate, formaterPrix } from '@/utils/format'
 
 const auth = useAuthStore()
 const garderie = ref<Garderie | null>(null)
 const f = reactive({ nom: '', adresse: '', telephone: '', courriel: '', heuresOuverture: '', fuseauHoraire: 'America/Toronto' })
 const FUSEAUX = ['America/Toronto', 'America/Montreal', 'America/Halifax', 'America/Moncton', 'America/Winnipeg', 'America/Edmonton', 'America/Vancouver', 'Europe/Paris', 'Europe/Brussels', 'Europe/Zurich', 'Africa/Casablanca', 'Africa/Dakar', 'Africa/Abidjan', 'Africa/Tunis', 'Africa/Algiers']
-const forfaits = ref<Forfait[]>([])
-const forfaitActuel = computed(() => forfaits.value.find((x) => x.plan === garderie.value?.planEffectif))
+const grille = useForfaitsStore()
+const forfaits = computed(() => grille.forfaits)
+const forfaitActuel = computed(() => forfaits.value.find((x) => x.code === garderie.value?.planEffectif))
 const enEssai = computed(() => !!garderie.value?.essaiJusquau && new Date(garderie.value.essaiJusquau).getTime() > Date.now())
 const message = ref('')
 const erreur = ref('')
 
 onMounted(async () => {
-  const [g, liste] = await Promise.all([api<Garderie>('/garderie'), api<Forfait[]>('/forfaits').catch(() => [])])
+  const [g] = await Promise.all([api<Garderie>('/garderie'), grille.charger()])
   garderie.value = g
-  forfaits.value = liste
   Object.assign(f, {
     nom: g.nom,
     adresse: g.adresse ?? '',
@@ -48,7 +49,7 @@ async function enregistrer() {
 
     <div v-if="garderie" class="carte forfait">
       <div class="rangee" style="margin-bottom: 0.25rem">
-        <h2 style="margin: 0">Forfait {{ PLANS[garderie.planEffectif] }}</h2>
+        <h2 style="margin: 0">Forfait {{ garderie.planEffectifNom }}</h2>
         <span v-if="enEssai" class="badge orange">Essai jusqu'au {{ formaterDate(garderie.essaiJusquau!) }}</span>
         <span class="espace" />
         <span v-if="forfaitActuel" class="prix-actuel">
@@ -57,7 +58,7 @@ async function enregistrer() {
       </div>
       <p class="petit doux">
         <template v-if="enEssai">
-          Pendant l'essai, vous profitez du forfait Pro. Ensuite, votre garderie passera au forfait {{ PLANS[garderie.plan] }}.
+          Pendant l'essai, vous profitez du forfait {{ garderie.planEffectifNom }}. Ensuite, votre garderie passera au forfait {{ garderie.planNom }}.
         </template>
         <template v-else>{{ forfaitActuel?.description }}</template>
       </p>
@@ -66,16 +67,16 @@ async function enregistrer() {
         <JaugeUtilisation libelle="Personnel (invitations comprises)" :utilise="garderie.utilisation.personnel" :max="garderie.limites.maxPersonnel" />
       </div>
       <p v-if="!garderie.fonctionnalites.includes('photos')" class="petit doux" style="margin: 0.9rem 0 0">
-        Le partage de photos est inclus dans les forfaits Familial, Pro et Sur mesure.
+        Le partage de photos est inclus avec : {{ grille.nomsAvec('photos').join(', ') || 'un forfait payant' }}.
       </p>
 
       <details class="comparer">
         <summary>Comparer les forfaits</summary>
         <div class="liste-forfaits">
-          <div v-for="fo in forfaits" :key="fo.plan" class="mini-forfait" :class="{ actuel: fo.plan === garderie.planEffectif }">
+          <div v-for="fo in forfaits" :key="fo.code" class="mini-forfait" :class="{ actuel: fo.code === garderie.planEffectif }">
             <div class="rangee">
               <strong>{{ fo.nom }}</strong>
-              <span v-if="fo.plan === garderie.planEffectif" class="badge vert">Actuel</span>
+              <span v-if="fo.code === garderie.planEffectif" class="badge vert">Actuel</span>
             </div>
             <div class="prix-mini">
               {{ fo.prixAPartirDe ? 'dès ' : '' }}{{ formaterPrix(fo.prixMensuel) }}<small> / mois</small>
@@ -86,7 +87,7 @@ async function enregistrer() {
           </div>
         </div>
         <p class="petit doux" style="margin: 0.75rem 0 0">
-          Prix en dollars canadiens, avant taxes. Pour changer de forfait, écrivez-nous : le changement est appliqué le jour même.
+          {{ grille.parametres?.mentionTaxes }} Pour changer de forfait, écrivez-nous : le changement est appliqué le jour même.
         </p>
       </details>
     </div>

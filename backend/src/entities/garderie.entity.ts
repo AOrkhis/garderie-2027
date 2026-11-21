@@ -43,8 +43,19 @@ export class Garderie {
   })
   statut: StatutGarderie;
 
-  @Column({ type: 'enum', enum: PlanGarderie, default: PlanGarderie.GRATUIT })
-  plan: PlanGarderie;
+  /** Ancienne colonne (enum) conservée telle quelle pour la migration vers `forfait`. */
+  @Column({
+    name: 'plan',
+    type: 'enum',
+    enum: PlanGarderie,
+    default: PlanGarderie.GRATUIT,
+    select: false,
+  })
+  planHerite: PlanGarderie;
+
+  /** Code du forfait (table `forfaits`). */
+  @Column({ name: 'forfait', type: 'varchar', length: 40, nullable: true })
+  plan: string;
 
   /** Fin de la période d'essai Pro (null = pas d'essai en cours). */
   @Column({ type: 'datetime', nullable: true })
