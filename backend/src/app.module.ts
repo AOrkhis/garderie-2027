@@ -9,6 +9,7 @@ import { EnfantsModule } from './enfants/enfants.module';
 import { GarderieModule } from './garderie/garderie.module';
 import { JournalModule } from './journal/journal.module';
 import { PhotosModule } from './photos/photos.module';
+import { StripeModule } from './stripe/stripe.module';
 import { SuperAdminModule } from './super-admin/super-admin.module';
 
 @Module({
@@ -37,6 +38,7 @@ import { SuperAdminModule } from './super-admin/super-admin.module';
     EnfantsModule,
     JournalModule,
     PhotosModule,
+    StripeModule,
     SuperAdminModule,
   ],
   controllers: [AppController],

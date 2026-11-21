@@ -43,6 +43,8 @@ export interface Forfait {
   vedette: boolean
   etiquetteVedette: string | null
   libelleBouton: string | null
+  stripePrixMensuelId?: string | null
+  stripePrixAnnuelId?: string | null
 }
 
 export interface GrilleForfaits {
@@ -110,6 +112,10 @@ export interface Garderie {
   fonctionnalites: string[]
   limites: Limites
   utilisation: { enfants: number; personnel: number }
+  stripeClientId?: string | null
+  stripeAbonnementId?: string | null
+  stripeStatut?: string | null
+  payeJusquau?: string | null
   creeLe: string
 }
 

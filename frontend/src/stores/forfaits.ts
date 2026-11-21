@@ -22,9 +22,9 @@ export const useForfaitsStore = defineStore('forfaits', () => {
     return chargement
   }
 
-  /** Premier forfait (dans l'ordre d'affichage) qui inclut une fonctionnalité. */
-  const pour = (f: string) => forfaits.value.find((x) => x.fonctionnalites.includes(f)) ?? null
-  const nomsAvec = (f: string) => forfaits.value.filter((x) => x.fonctionnalites.includes(f)).map((x) => x.nom)
+  /** Premier forfait public (dans l'ordre d'affichage) qui inclut une fonctionnalité. */
+  const pour = (f: string) => forfaits.value.find((x) => x.public && x.fonctionnalites?.includes(f)) ?? null
+  const nomsAvec = (f: string) => forfaits.value.filter((x) => x.public && x.fonctionnalites?.includes(f)).map((x) => x.nom)
 
   return { forfaits, parametres, charger, pour, nomsAvec }
 })

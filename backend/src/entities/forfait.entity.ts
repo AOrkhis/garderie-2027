@@ -52,12 +52,12 @@ export class Forfait {
   @Column({ type: 'int', nullable: true })
   maxPersonnel: number | null;
 
-  @Column({ type: 'json' })
-  fonctionnalites: string[];
+  @Column({ type: 'json', nullable: true })
+  fonctionnalites: string[] | null;
 
   /** Arguments affichés sur la grille tarifaire. */
-  @Column({ type: 'json' })
-  points: string[];
+  @Column({ type: 'json', nullable: true })
+  points: string[] | null;
 
   @Column({ type: 'int', default: 0 })
   ordre: number;
@@ -75,6 +75,14 @@ export class Forfait {
 
   @Column({ type: 'varchar', length: 40, nullable: true })
   libelleBouton: string | null;
+
+  /** ID du prix Stripe pour la facturation mensuelle (null = non vendu en ligne). */
+  @Column({ type: 'varchar', length: 100, nullable: true })
+  stripePrixMensuelId: string | null;
+
+  /** ID du prix Stripe pour la facturation annuelle. */
+  @Column({ type: 'varchar', length: 100, nullable: true })
+  stripePrixAnnuelId: string | null;
 
   @CreateDateColumn()
   creeLe: Date;

@@ -11,3 +11,4 @@ export * from './photo.entity';
 export * from './utilisateur.entity';
 export * from './forfait.entity';
 export * from './parametres-plateforme.entity';
+export * from './evenement-stripe.entity';

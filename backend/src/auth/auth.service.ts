@@ -48,6 +48,21 @@ function slugifier(nom: string): string {
   return `${base || 'garderie'}-${randomBytes(3).toString('hex')}`;
 }
 
+function finEssai(jours: number) {
+  const maintenant = new Date();
+  return new Date(
+    Date.UTC(
+      maintenant.getUTCFullYear(),
+      maintenant.getUTCMonth(),
+      maintenant.getUTCDate() + jours,
+      23,
+      59,
+      59,
+      999,
+    ),
+  );
+}
+
 @Injectable()
 export class AuthService implements OnModuleInit {
   private readonly echecs = new Map<
@@ -136,11 +151,7 @@ export class AuthService implements OnModuleInit {
           telephone: dto.telephone ?? null,
           courriel: dto.courriel,
           plan: reglages?.forfaitDefaut ?? 'GRATUIT',
-          essaiJusquau: essai
-            ? new Date(
-                Date.now() + reglages!.dureeEssaiJours * 24 * 3600 * 1000,
-              )
-            : null,
+          essaiJusquau: essai ? finEssai(reglages!.dureeEssaiJours) : null,
         }),
       );
       const user = await m.save(

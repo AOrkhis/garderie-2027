@@ -135,6 +135,12 @@ async function basculerFonctionnalite(g: GarderieAdmin, cle: string) {
                 </select>
                 <div class="petit" style="margin-top: 0.25rem">
                   <span v-if="enEssai(g)" class="badge orange">Essai jusqu'au {{ formaterDate(g.essaiJusquau!) }}</span>
+                  <span
+                    v-if="g.stripeAbonnementId"
+                    class="badge"
+                    :class="g.stripeStatut === 'past_due' || g.stripeStatut === 'unpaid' ? 'rouge' : 'vert'"
+                    :title="`Abo ${g.stripeAbonnementId}`"
+                  >Stripe {{ g.stripeStatut }}{{ g.payeJusquau ? ` · ${formaterDate(g.payeJusquau)}` : '' }}</span>
                   <button class="btn lien petit" style="padding: 0; min-height: 0" @click="prolongerEssai(g)">+{{ dureeEssai }} j d'essai</button>
                 </div>
               </td>

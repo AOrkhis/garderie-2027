@@ -175,7 +175,7 @@ export function resumeForfait(g: GarderiePlan) {
 /** Noms des forfaits publics qui incluent une fonctionnalité (« Familial, Pro »). */
 export const forfaitsAvec = (f: Fonctionnalite) =>
   forfaitsEnCache()
-    .filter((x) => x.public && x.fonctionnalites.includes(f))
+    .filter((x) => x.public && x.fonctionnalites?.includes(f))
     .map((x) => x.nom);
 
 /** Lève une 402 si l'ajout dépasse la limite du forfait. */

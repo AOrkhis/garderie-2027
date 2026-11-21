@@ -69,6 +69,10 @@ class ForfaitDto {
   @IsOptional() @IsBoolean() vedette?: boolean;
   @IsOptional() @IsString() @MaxLength(40) etiquetteVedette?: string | null;
   @IsOptional() @IsString() @MaxLength(40) libelleBouton?: string | null;
+
+  /** Prix Stripe pour la vente en ligne (null/vide = non vendu en ligne). */
+  @IsOptional() @IsString() @MaxLength(100) stripePrixMensuelId?: string | null;
+  @IsOptional() @IsString() @MaxLength(100) stripePrixAnnuelId?: string | null;
 }
 
 /** Mêmes règles, tous les champs facultatifs (le code n'est jamais modifié). */

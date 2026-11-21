@@ -24,6 +24,8 @@ interface Brouillon {
   vedette: boolean
   etiquetteVedette: string
   libelleBouton: string
+  stripePrixMensuelId: string
+  stripePrixAnnuelId: string
 }
 
 const notif = useNotificationsStore()
@@ -51,6 +53,8 @@ const versBrouillon = (f: Forfait): Brouillon => ({
   vedette: f.vedette,
   etiquetteVedette: f.etiquetteVedette ?? '',
   libelleBouton: f.libelleBouton ?? '',
+  stripePrixMensuelId: f.stripePrixMensuelId ?? '',
+  stripePrixAnnuelId: f.stripePrixAnnuelId ?? '',
 })
 
 const nombreOuNull = (s: string, entier = false) => {
@@ -79,6 +83,8 @@ function versCorps(b: Brouillon) {
     vedette: b.vedette,
     etiquetteVedette: b.etiquetteVedette.trim() || null,
     libelleBouton: b.libelleBouton.trim() || null,
+    stripePrixMensuelId: b.stripePrixMensuelId.trim() || null,
+    stripePrixAnnuelId: b.stripePrixAnnuelId.trim() || null,
   }
 }
 
@@ -158,6 +164,8 @@ function commencerNouveau() {
     vedette: false,
     etiquetteVedette: '',
     libelleBouton: '',
+    stripePrixMensuelId: '',
+    stripePrixAnnuelId: '',
   }
 }
 
@@ -325,6 +333,18 @@ function basculerFonction(b: Brouillon, cle: string) {
             <label v-if="brouillons[f.code]!.vedette" class="champ">
               <span>Étiquette</span>
               <input v-model="brouillons[f.code]!.etiquetteVedette" maxlength="40" placeholder="Ex. : Le plus populaire" />
+            </label>
+          </fieldset>
+
+          <fieldset>
+            <legend>Vente en ligne (Stripe)</legend>
+            <label class="champ">
+              <span>ID du prix mensuel</span>
+              <input v-model="brouillons[f.code]!.stripePrixMensuelId" maxlength="100" placeholder="price_… (vide = non vendu)" />
+            </label>
+            <label class="champ">
+              <span>ID du prix annuel</span>
+              <input v-model="brouillons[f.code]!.stripePrixAnnuelId" maxlength="100" placeholder="price_… (vide = non vendu)" />
             </label>
           </fieldset>
 

@@ -104,6 +104,8 @@ export class ForfaitsService implements OnModuleInit {
     const f = await this.forfaits.findOneBy({ code });
     if (!f) throw new NotFoundException('Forfait introuvable.');
     delete champs.code;
+    for (const cle of ['stripePrixMensuelId', 'stripePrixAnnuelId'] as const)
+      if (champs[cle] === '') champs[cle] = null;
     await this.forfaits.save(Object.assign(f, champs));
     await this.recharger();
     return this.administration();

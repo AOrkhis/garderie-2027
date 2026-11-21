@@ -62,8 +62,8 @@ export class Garderie {
   essaiJusquau: Date | null;
 
   /** Fonctionnalités accordées au cas par cas par le super admin (en plus du plan). */
-  @Column({ type: 'json' })
-  fonctionnalitesExtra: string[];
+  @Column({ type: 'json', nullable: true })
+  fonctionnalitesExtra: string[] | null;
 
   /** Limites fixées par le super admin (null = celles du forfait). */
   @Column({ type: 'int', nullable: true })
@@ -71,6 +71,22 @@ export class Garderie {
 
   @Column({ type: 'int', nullable: true })
   maxPersonnelPerso: number | null;
+
+  /** Identifiant du client Stripe (null = jamais payé en ligne). */
+  @Column({ type: 'varchar', length: 100, nullable: true })
+  stripeClientId: string | null;
+
+  /** Identifiant de l'abonnement Stripe en cours. */
+  @Column({ type: 'varchar', length: 100, nullable: true })
+  stripeAbonnementId: string | null;
+
+  /** Statut de l'abonnement Stripe (active, past_due, canceled…). */
+  @Column({ type: 'varchar', length: 40, nullable: true })
+  stripeStatut: string | null;
+
+  /** Fin de la période Stripe payée (renouvellement ou échéance). */
+  @Column({ type: 'datetime', nullable: true })
+  payeJusquau: Date | null;
 
   @CreateDateColumn()
   creeLe: Date;
