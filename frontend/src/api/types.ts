@@ -29,6 +29,7 @@ export interface Adhesion {
     fuseauHoraire: string
     plan: PlanGarderie
     planEffectif: PlanGarderie
+    fonctionnalites: string[]
     essaiJusquau: string | null
   }
 }
@@ -229,5 +230,9 @@ export interface EnfantParent extends Enfant {
 }
 
 export interface GarderieAdmin extends Garderie {
+  fonctionnalitesPlan: string[]
+  fonctionnalitesEffectives: string[]
+  fonctionnalitesExtra: string[]
+  admins: { nom: string; courriel: string }[]
   statistiques: { enfants: number; personnel: number; parents: number; entrees: number; photos: number }
 }

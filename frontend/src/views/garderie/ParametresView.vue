@@ -50,7 +50,7 @@ async function enregistrer() {
         Essai Pro jusqu'au {{ new Date(garderie.essaiJusquau).toLocaleDateString('fr-CA', { day: 'numeric', month: 'long', year: 'numeric' }) }}
         — partage de photos inclus.
       </p>
-      <p v-else-if="garderie.planEffectif === 'PRO'" class="petit doux" style="margin: 0">Partage de photos inclus.</p>
+      <p v-else-if="garderie.fonctionnalites?.includes('photos')" class="petit doux" style="margin: 0">Partage de photos inclus.</p>
       <p v-else class="petit doux" style="margin: 0">
         Le journal (repas, siestes, activités…) est inclus. Le partage de photos avec les parents nécessite le forfait Pro —
         contactez-nous pour l'activer.

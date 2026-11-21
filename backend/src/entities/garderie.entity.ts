@@ -50,6 +50,10 @@ export class Garderie {
   @Column({ type: 'datetime', nullable: true })
   essaiJusquau: Date | null;
 
+  /** Fonctionnalités accordées au cas par cas par le super admin (en plus du plan). */
+  @Column({ type: 'json' })
+  fonctionnalitesExtra: string[];
+
   @CreateDateColumn()
   creeLe: Date;
 

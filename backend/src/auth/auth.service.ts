@@ -14,7 +14,7 @@ import { randomBytes } from 'crypto';
 import { DataSource, In, MoreThan, Repository } from 'typeorm';
 import { AuditService } from '../common/audit.service';
 import { UtilisateurConnecte } from '../common/auth.decorators';
-import { planEffectif } from '../common/fonctionnalites';
+import { fonctionnalitesDe, planEffectif } from '../common/fonctionnalites';
 import { Role, StatutGarderie } from '../common/enums';
 import { genererJeton, hacherJeton } from '../common/jetons';
 import { MailService } from '../common/mail.service';
@@ -274,6 +274,7 @@ export class AuthService implements OnModuleInit {
           fuseauHoraire: a.garderie.fuseauHoraire,
           plan: a.garderie.plan,
           planEffectif: planEffectif(a.garderie),
+          fonctionnalites: fonctionnalitesDe(a.garderie),
           essaiJusquau: a.garderie.essaiJusquau,
         },
       })),

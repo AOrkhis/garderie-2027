@@ -20,8 +20,9 @@ export const useAuthStore = defineStore('auth', () => {
     const e = adhesionCourante.value?.garderie.essaiJusquau
     return !!e && new Date(e).getTime() > Date.now()
   })
+  /** Uniquement pour les fonctionnalités payantes (ex. 'photos'). */
   const aFonctionnalite = (f: string) =>
-    f === 'photos' ? planEffectif.value === 'PRO' : true
+    (adhesionCourante.value?.garderie.fonctionnalites ?? []).includes(f)
 
   const accueil = computed(() => {
     if (estParent.value) return '/parent'

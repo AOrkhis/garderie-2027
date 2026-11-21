@@ -9,7 +9,14 @@ import {
   Patch,
 } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { IsDateString, IsEnum, IsOptional } from 'class-validator';
+import {
+  IsArray,
+  IsDateString,
+  IsEnum,
+  IsIn,
+  IsOptional,
+  IsString,
+} from 'class-validator';
 import { Repository } from 'typeorm';
 import { AuditService } from '../common/audit.service';
 import {
@@ -17,7 +24,13 @@ import {
   Utilisateur,
   UtilisateurConnecte,
 } from '../common/auth.decorators';
-import { planEffectif } from '../common/fonctionnalites';
+import {
+  FONCTIONNALITES,
+  Fonctionnalite,
+  fonctionnalitesDe,
+  fonctionnalitesDuPlan,
+  planEffectif,
+} from '../common/fonctionnalites';
 import {
   PlanGarderie,
   Role,
@@ -26,10 +39,17 @@ import {
 } from '../common/enums';
 import { Adhesion, Enfant, EntreeJournal, Garderie, Photo } from '../entities';
 
+const CLES_FONCTIONNALITES = FONCTIONNALITES.map((f) => f.cle);
+
 class ModifierGarderieAdminDto {
   @IsOptional() @IsEnum(StatutGarderie) statut?: StatutGarderie;
   @IsOptional() @IsEnum(PlanGarderie) plan?: PlanGarderie;
   @IsOptional() @IsDateString() essaiJusquau?: string | null;
+  @IsOptional()
+  @IsArray()
+  @IsString({ each: true })
+  @IsIn(CLES_FONCTIONNALITES, { each: true })
+  fonctionnalitesExtra?: string[];
 }
 
 async function compter(
@@ -63,9 +83,15 @@ export class SuperAdminController {
     @InjectRepository(Photo) private readonly photos: Repository<Photo>,
   ) {}
 
+  /** Registre des fonctionnalités cochables dans la console. */
+  @Get('fonctionnalites')
+  fonctionnalites() {
+    return FONCTIONNALITES;
+  }
+
   @Get('garderies')
   async lister() {
-    const [garderies, enfants, personnel, parents, entrees, photos] =
+    const [garderies, enfants, personnel, parents, entrees, photos, staff] =
       await Promise.all([
         this.garderies.find({ order: { creeLe: 'DESC' } }),
         compter(this.enfants, 'e', 'e.statut = :s', { s: StatutEnfant.ACTIF }),
@@ -77,10 +103,26 @@ export class SuperAdminController {
         }),
         compter(this.entrees, 'j'),
         compter(this.photos, 'p'),
+        this.adhesions.find({
+          where: { role: Role.ADMIN, actif: true },
+          relations: { utilisateur: true },
+        }),
       ]);
+    const admins = new Map<number, { nom: string; courriel: string }[]>();
+    for (const a of staff) {
+      const liste = admins.get(a.garderieId) ?? [];
+      liste.push({
+        nom: `${a.utilisateur.prenom} ${a.utilisateur.nom}`,
+        courriel: a.utilisateur.courriel,
+      });
+      admins.set(a.garderieId, liste);
+    }
     return garderies.map((g) => ({
       ...g,
       planEffectif: planEffectif(g),
+      fonctionnalitesPlan: fonctionnalitesDuPlan(g),
+      fonctionnalitesEffectives: fonctionnalitesDe(g),
+      admins: admins.get(g.id) ?? [],
       statistiques: {
         enfants: enfants.get(g.id) ?? 0,
         personnel: personnel.get(g.id) ?? 0,
@@ -104,12 +146,16 @@ export class SuperAdminController {
       champs.essaiJusquau = dto.essaiJusquau
         ? new Date(dto.essaiJusquau)
         : null;
+    if (dto.fonctionnalitesExtra !== undefined)
+      champs.fonctionnalitesExtra = dto.fonctionnalitesExtra.filter((f) =>
+        CLES_FONCTIONNALITES.includes(f as Fonctionnalite),
+      );
     if (!Object.keys(champs).length)
       throw new BadRequestException('Aucune modification fournie.');
     const res = await this.garderies.update({ id }, champs);
     if (!res.affected) throw new NotFoundException('Garderie introuvable.');
     const details = Object.entries(champs)
-      .map(([k, v]) => `${k}=${v instanceof Date ? v.toISOString() : v}`)
+      .map(([k, v]) => `${k}=${JSON.stringify(v)}`)
       .join(', ');
     await this.audit.consigner(
       { utilisateurId: user.utilisateurId, garderieId: id },
@@ -118,6 +164,11 @@ export class SuperAdminController {
       { champs: details },
     );
     const g = await this.garderies.findOneByOrFail({ id });
-    return { ...g, planEffectif: planEffectif(g) };
+    return {
+      ...g,
+      planEffectif: planEffectif(g),
+      fonctionnalitesPlan: fonctionnalitesDuPlan(g),
+      fonctionnalitesEffectives: fonctionnalitesDe(g),
+    };
   }
 }
