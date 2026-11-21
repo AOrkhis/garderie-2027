@@ -88,3 +88,24 @@ export async function api<T = unknown>(
   if (!res.ok) throw new ApiError(messageErreur(data, res.status), res.status)
   return data as T
 }
+
+/** Télécharge un binaire authentifié (logo, images…). */
+export async function apiBlob(chemin: string, reessai = true): Promise<Blob> {
+  const j = jetons.lire()
+  let res: Response
+  try {
+    res = await fetch(`${BASE_API}/api${chemin}`, {
+      headers: j ? { Authorization: `Bearer ${j.accessToken}` } : {},
+    })
+  } catch {
+    throw new ApiError('Impossible de joindre le serveur. Vérifiez votre connexion.', 0)
+  }
+  if (res.status === 401 && j && reessai) {
+    rafraichissement ??= rafraichir().finally(() => (rafraichissement = null))
+    if (await rafraichissement) return apiBlob(chemin, false)
+    jetons.ecrire(null)
+    surDeconnexion()
+  }
+  if (!res.ok) throw new ApiError('Erreur de téléchargement.', res.status)
+  return res.blob()
+}

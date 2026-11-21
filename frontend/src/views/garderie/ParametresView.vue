@@ -103,6 +103,44 @@ async function ouvrirPortail() {
     notif.erreur(e)
   }
 }
+
+const envoiLogo = ref(false)
+
+async function televerserLogo(e: Event) {
+  const champ = e.target as HTMLInputElement
+  const fichier = champ.files?.[0]
+  champ.value = ''
+  if (!fichier) return
+  envoiLogo.value = true
+  try {
+    const corps = new FormData()
+    corps.append('logo', fichier)
+    await api('/garderie/logo', { method: 'POST', body: corps })
+    await auth.chargerMoi()
+    await auth.chargerLogoGarderie(true)
+    await rafraichirGarderie()
+    notif.succes('Logo enregistré.')
+  } catch (err) {
+    notif.erreur(err)
+  } finally {
+    envoiLogo.value = false
+  }
+}
+
+async function supprimerLogo() {
+  envoiLogo.value = true
+  try {
+    await api('/garderie/logo', { method: 'DELETE' })
+    await auth.chargerMoi()
+    await auth.chargerLogoGarderie(true)
+    await rafraichirGarderie()
+    notif.succes('Logo supprimé.')
+  } catch (err) {
+    notif.erreur(err)
+  } finally {
+    envoiLogo.value = false
+  }
+}
 </script>
 
 <template>
@@ -188,6 +226,26 @@ async function ouvrirPortail() {
       </details>
     </div>
 
+    <div v-if="garderie" class="carte">
+      <h2 style="margin-top: 0">Logo</h2>
+      <p class="petit doux" style="margin-top: -0.3rem">
+        Affiché dans l'application pour votre équipe et les parents. PNG, JPEG, WebP ou GIF — 2 Mo max.
+      </p>
+      <div class="logo-bloc">
+        <img v-if="auth.logoGarderie" :src="auth.logoGarderie" class="apercu-logo" :alt="`Logo ${garderie.nom}`" />
+        <div v-else class="apercu-logo vide">{{ garderie.nom.slice(0, 1).toUpperCase() }}</div>
+        <div class="actions-logo">
+          <label class="btn secondaire petit" :class="{ desactive: envoiLogo }">
+            {{ envoiLogo ? 'Envoi…' : garderie.logoMime ? 'Remplacer le logo' : 'Choisir un logo' }}
+            <input type="file" accept="image/png,image/jpeg,image/webp,image/gif" hidden :disabled="envoiLogo" @change="televerserLogo" />
+          </label>
+          <button v-if="garderie.logoMime" type="button" class="btn lien petit" style="color: var(--c-danger)" :disabled="envoiLogo" @click="supprimerLogo">
+            Supprimer
+          </button>
+        </div>
+      </div>
+    </div>
+
     <form class="carte" @submit.prevent="enregistrer">
       <label class="champ"><span>Nom</span><input v-model="f.nom" required maxlength="150" /></label>
       <label class="champ"><span>Adresse</span><input v-model="f.adresse" maxlength="255" /></label>
@@ -210,6 +268,37 @@ async function ouvrirPortail() {
 </template>
 
 <style scoped>
+.logo-bloc {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  flex-wrap: wrap;
+}
+.apercu-logo {
+  width: 72px;
+  height: 72px;
+  border-radius: 16px;
+  object-fit: cover;
+  border: 1px solid var(--c-bord);
+}
+.apercu-logo.vide {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  background: var(--c-primaire-clair);
+  color: var(--c-primaire-fonce);
+  font-weight: 700;
+  font-size: 1.6rem;
+}
+.actions-logo {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+}
+.desactive {
+  opacity: 0.6;
+  pointer-events: none;
+}
 .forfait {
   margin-bottom: 1rem;
 }

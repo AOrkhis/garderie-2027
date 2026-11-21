@@ -1,6 +1,6 @@
 import { defineStore } from 'pinia'
 import { computed, ref } from 'vue'
-import { api, jetons } from '@/api/client'
+import { api, apiBlob, jetons } from '@/api/client'
 import type { Jetons, Moi } from '@/api/types'
 
 export const useAuthStore = defineStore('auth', () => {
@@ -24,6 +24,27 @@ export const useAuthStore = defineStore('auth', () => {
   const aFonctionnalite = (f: string) =>
     (adhesionCourante.value?.garderie.fonctionnalites ?? []).includes(f)
 
+  /** Logo de la garderie courante (URL d'objet local), chargé à la demande. */
+  const logoGarderie = ref<string | null>(null)
+  let logoChargePour: string | null = null
+  async function chargerLogoGarderie(forcer = false) {
+    const g = adhesionCourante.value?.garderie
+    if (!g?.aLogo || !g.id) {
+      logoGarderie.value = null
+      logoChargePour = null
+      return
+    }
+    if (!forcer && logoChargePour === String(g.id)) return
+    logoChargePour = String(g.id)
+    try {
+      const blob = await apiBlob('/garderie/logo')
+      if (logoGarderie.value) URL.revokeObjectURL(logoGarderie.value)
+      logoGarderie.value = URL.createObjectURL(blob)
+    } catch {
+      logoGarderie.value = null
+    }
+  }
+
   const accueil = computed(() => {
     if (estParent.value) return '/parent'
     if (estPersonnel.value) return '/garderie/aujourd-hui'
@@ -37,6 +58,7 @@ export const useAuthStore = defineStore('auth', () => {
     } else {
       try {
         moi.value = await api<Moi>('/auth/moi')
+        void chargerLogoGarderie()
       } catch {
         moi.value = null
       }
@@ -82,6 +104,8 @@ export const useAuthStore = defineStore('auth', () => {
     planEffectif,
     enEssai,
     aFonctionnalite,
+    logoGarderie,
+    chargerLogoGarderie,
     accueil,
     chargerMoi,
     ouvrirSession,

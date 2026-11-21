@@ -38,6 +38,16 @@ const onglets = computed(() => {
   return base
 })
 
+const initialesGarderie = computed(() =>
+  (auth.adhesionCourante?.garderie.nom ?? '?')
+    .split(/\s+/)
+    .filter(Boolean)
+    .map((m) => m[0])
+    .slice(0, 2)
+    .join('')
+    .toUpperCase(),
+)
+
 async function changer(e: Event) {
   await auth.changerAdhesion(Number((e.target as HTMLSelectElement).value))
   router.push(auth.accueil)
@@ -59,7 +69,11 @@ function deconnexion() {
 
     <template v-if="auth.connecte">
       <span class="espace" />
-      <span class="garderie-nom doux petit">{{ auth.adhesionCourante?.garderie.nom }}</span>
+      <span class="garderie-identite">
+        <img v-if="auth.logoGarderie" :src="auth.logoGarderie" class="logo-g mini" :alt="`Logo ${auth.adhesionCourante?.garderie.nom}`" />
+        <span v-else class="initiales-g mini">{{ initialesGarderie }}</span>
+        <span class="garderie-nom">{{ auth.adhesionCourante?.garderie.nom }}</span>
+      </span>
       <RouterLink
         v-if="auth.moi?.estSuperAdmin"
         to="/admin/garderies"
@@ -97,7 +111,11 @@ function deconnexion() {
         {{ a.garderie.nom }} — {{ ROLES[a.role] }}
       </option>
     </select>
-    <div v-else-if="auth.adhesionCourante" class="nom-garderie">{{ auth.adhesionCourante.garderie.nom }}</div>
+    <div v-else-if="auth.adhesionCourante" class="nom-garderie">
+      <img v-if="auth.logoGarderie" :src="auth.logoGarderie" class="logo-g" :alt="`Logo ${auth.adhesionCourante.garderie.nom}`" />
+      <span v-else class="initiales-g">{{ initialesGarderie }}</span>
+      <span class="nom">{{ auth.adhesionCourante.garderie.nom }}</span>
+    </div>
 
     <div class="liens">
       <RouterLink v-for="l in liens" :key="l.a" :to="l.a">
@@ -171,11 +189,44 @@ function deconnexion() {
 .espace {
   flex: 1;
 }
+.garderie-identite {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.45rem;
+  min-width: 0;
+}
 .garderie-nom {
   max-width: 38vw;
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
+  font-weight: 600;
+  font-size: 0.9rem;
+  color: var(--c-texte);
+}
+.logo-g,
+.initiales-g {
+  width: 40px;
+  height: 40px;
+  border-radius: 12px;
+  object-fit: cover;
+  flex-shrink: 0;
+}
+.initiales-g {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  background: var(--c-primaire-clair);
+  color: var(--c-primaire-fonce);
+  font-weight: 700;
+  font-size: 0.95rem;
+}
+.logo-g.mini,
+.initiales-g.mini {
+  width: 28px;
+  height: 28px;
+  border-radius: 8px;
+  font-size: 0.68rem;
 }
 .avatar-mini {
   width: 34px;
@@ -363,14 +414,19 @@ function deconnexion() {
     padding: 0.5rem;
   }
   .rail .nom-garderie {
-    display: block;
+    display: flex;
+    align-items: center;
+    gap: 0.6rem;
     font-weight: 600;
-    font-size: 0.85rem;
+    font-size: 0.9rem;
     color: var(--c-texte);
     background: var(--c-survol);
     border: 1px solid var(--c-bord);
-    border-radius: 8px;
+    border-radius: 12px;
     padding: 0.5rem 0.7rem;
+    overflow: hidden;
+  }
+  .rail .nom-garderie .nom {
     overflow: hidden;
     text-overflow: ellipsis;
     white-space: nowrap;

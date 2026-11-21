@@ -53,6 +53,7 @@ export class GarderieService {
     return {
       ...g,
       ...resumeForfait(g),
+      aLogo: !!g.logoMime,
       utilisation: { enfants, personnel },
     };
   }
@@ -86,6 +87,35 @@ export class GarderieService {
     await this.garderies.update({ id: user.garderieId! }, dto);
     await this.audit.consigner(user, 'garderie.modifiee');
     return this.obtenir(user);
+  }
+
+  // ---------- Logo ----------
+
+  async obtenirLogo(user: UtilisateurConnecte) {
+    const g = await this.garderies
+      .createQueryBuilder('g')
+      .addSelect('g.logo')
+      .where('g.id = :id', { id: user.garderieId! })
+      .getOne();
+    if (!g?.logo) throw new NotFoundException('Aucun logo.');
+    return { contenu: g.logo, mime: g.logoMime ?? 'image/png' };
+  }
+
+  async definirLogo(user: UtilisateurConnecte, fichier: Express.Multer.File) {
+    await this.garderies.update(
+      { id: user.garderieId! },
+      { logo: fichier.buffer, logoMime: fichier.mimetype, logoUrl: null },
+    );
+    await this.audit.consigner(user, 'garderie.logo_modifie');
+    return this.obtenir(user);
+  }
+
+  async supprimerLogo(user: UtilisateurConnecte) {
+    await this.garderies.update(
+      { id: user.garderieId! },
+      { logo: null, logoMime: null },
+    );
+    await this.audit.consigner(user, 'garderie.logo_supprime');
   }
 
   // ---------- Groupes ----------

@@ -72,6 +72,7 @@ export interface Adhesion {
     nom: string
     statut: string
     fuseauHoraire: string
+    aLogo: boolean
     plan: PlanGarderie
     planNom: string
     planEffectif: PlanGarderie
@@ -112,6 +113,9 @@ export interface Garderie {
   fonctionnalites: string[]
   limites: Limites
   utilisation: { enfants: number; personnel: number }
+  logoUrl?: string | null
+  logoMime?: string | null
+  aLogo?: boolean
   stripeClientId?: string | null
   stripeAbonnementId?: string | null
   stripeStatut?: string | null

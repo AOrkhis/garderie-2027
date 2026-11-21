@@ -355,6 +355,7 @@ export class AuthService implements OnModuleInit {
           nom: a.garderie.nom,
           statut: a.garderie.statut,
           fuseauHoraire: a.garderie.fuseauHoraire,
+          aLogo: !!a.garderie.logoMime,
           plan: a.garderie.plan,
           ...resumeForfait(a.garderie),
           essaiJusquau: a.garderie.essaiJusquau,

@@ -1,4 +1,5 @@
 import {
+  BadRequestException,
   Body,
   Controller,
   Delete,
@@ -8,7 +9,12 @@ import {
   ParseIntPipe,
   Patch,
   Post,
+  Res,
+  UploadedFile,
+  UseInterceptors,
 } from '@nestjs/common';
+import { FileInterceptor } from '@nestjs/platform-express';
+import type { Response } from 'express';
 import {
   Roles,
   Utilisateur,
@@ -65,6 +71,49 @@ export class GarderieController {
     @Body() dto: ReaffecterDto,
   ) {
     return this.service.reaffecter(user, dto.enfantIds);
+  }
+
+  @Roles(Role.ADMIN, Role.GESTIONNAIRE, Role.PARENT)
+  @Get('garderie/logo')
+  async logo(@Utilisateur() user: UtilisateurConnecte, @Res() res: Response) {
+    const { contenu, mime } = await this.service.obtenirLogo(user);
+    res.setHeader('Content-Type', mime);
+    res.setHeader('Cache-Control', 'private, max-age=300');
+    res.send(contenu);
+  }
+
+  @Roles(Role.ADMIN)
+  @HttpCode(200)
+  @Post('garderie/logo')
+  @UseInterceptors(
+    FileInterceptor('logo', {
+      limits: { fileSize: 2 * 1024 * 1024 },
+      fileFilter: (_req, f, cb) =>
+        ['image/png', 'image/jpeg', 'image/webp', 'image/gif'].includes(
+          f.mimetype,
+        )
+          ? cb(null, true)
+          : cb(
+              new BadRequestException(
+                'Le logo doit être une image PNG, JPEG, WebP ou GIF (2 Mo max).',
+              ),
+              false,
+            ),
+    }),
+  )
+  definirLogo(
+    @Utilisateur() user: UtilisateurConnecte,
+    @UploadedFile() fichier?: Express.Multer.File,
+  ) {
+    if (!fichier) throw new BadRequestException('Aucun fichier reçu.');
+    return this.service.definirLogo(user, fichier);
+  }
+
+  @Roles(Role.ADMIN)
+  @HttpCode(204)
+  @Delete('garderie/logo')
+  supprimerLogo(@Utilisateur() user: UtilisateurConnecte) {
+    return this.service.supprimerLogo(user);
   }
 
   @Roles(Role.ADMIN)

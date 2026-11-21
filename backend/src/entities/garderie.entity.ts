@@ -30,6 +30,13 @@ export class Garderie {
   @Column({ type: 'varchar', length: 255, nullable: true })
   logoUrl: string | null;
 
+  /** Logo stocké en base (le disque Railway est éphémère). */
+  @Column({ type: 'longblob', nullable: true, select: false })
+  logo: Buffer | null;
+
+  @Column({ type: 'varchar', length: 100, nullable: true })
+  logoMime: string | null;
+
   @Column({ type: 'varchar', length: 100, nullable: true })
   heuresOuverture: string | null;
 
